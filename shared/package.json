@@ -1,0 +1,14 @@
+{
+  "name": "@kingsmaker/shared",
+  "version": "1.0.0",
+  "description": "Shared TypeScript types for KingsMaker",
+  "main": "types/index.ts",
+  "types": "types/index.ts",
+  "private": true,
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+} 

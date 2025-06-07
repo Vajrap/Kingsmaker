@@ -1,0 +1,10 @@
+- Players manage 4 core resources:
+    - **Wood** – Required for troops and building
+    - **Iron** – Required for troops and building
+    - **Food** - Require for troop upkeep
+    - **Gold** – Used for construction, upkeep, and diplomacy
+    - **Influence** – A political currency used for non-combat interactions
+- Wood Iron and Food shared one inventory space for each player, storage size can be increased by building
+- Player can hold infinite amount of coin
+- Amount of Influence each player can hold is limited to 5 and get +1 per village +2 per city +3 per castle/fortress they control
+- Resources are taken from a **shared, limited central pool**—scarcity drives competition

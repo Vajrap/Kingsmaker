@@ -1,0 +1,72 @@
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:../Database/database.db"
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String?   @unique
+  username     String    @unique
+  password     String?
+  nameAlias    String?
+  isConfirmed  Boolean   @default(false)
+  highestScore Int       @default(0)
+  totalGames   Int       @default(0)
+  totalWins    Int       @default(0)
+  totalLosses  Int       @default(0)
+  totalTies    Int       @default(0)
+  achievements Json      @default("[]") // Array of achievement IDs as JSON
+  unlockables  UserUnlockable[]
+  customizations UserCustomization[]
+  Session      Session[]
+}
+
+model Session {
+  id     String @id @default(cuid())
+  userID Int
+  user   User   @relation(fields: [userID], references: [id])
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+enum UnlockableType {
+  portrait
+  card_back
+  soldier_token
+  banner
+  emote
+}
+
+model UnlockableItem {
+  id         Int            @id @default(autoincrement())
+  type       UnlockableType
+  name       String
+  imageUrl   String
+  troopType  String?        // For soldier_token only
+  // Add more metadata fields as needed
+  userUnlockables UserUnlockable[]
+}
+
+model UserUnlockable {
+  id            Int            @id @default(autoincrement())
+  user          User           @relation(fields: [userId], references: [id])
+  userId        Int
+  unlockable    UnlockableItem @relation(fields: [unlockableId], references: [id])
+  unlockableId  Int
+  unlockedAt    DateTime       @default(now())
+}
+
+model UserCustomization {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  part      UnlockableType
+  value     String   // unlockableId or troopType
+  setAt     DateTime @default(now())
+}
