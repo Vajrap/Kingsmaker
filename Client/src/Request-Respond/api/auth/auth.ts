@@ -18,7 +18,7 @@ export async function validateSessionRequest(): Promise<ServerMessage | ServerEr
   };
 
   const response = await sendRestRequest(
-    "http://localhost:3000/api/auth",
+    "http://localhost:3000/api",
     "POST",
     body,
   );

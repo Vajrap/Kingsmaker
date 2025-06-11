@@ -16,7 +16,7 @@ export async function sendRegisterRequest(
   };
 
   const response = await sendRestRequest(
-    "http://localhost:3000/api/register",
+    "http://localhost:3000/api",
     "POST",
     body,
   );

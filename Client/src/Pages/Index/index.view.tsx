@@ -50,7 +50,7 @@ function validatePassword(password: string) {
   );
 }
 
-export function   LoginView({
+export function LoginView({
   username,
   setUsername,
   password,

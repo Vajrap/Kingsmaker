@@ -19,6 +19,11 @@ export const inputStyle = {
   color: currentTheme.textColor,
 };
 
+export const textStyle = {
+  fontSize: defaultStyle.fontSize,
+  color: currentTheme.textColor,
+};
+
 export const buttonStyle = {
   fontSize: defaultStyle.fontSize,
   w: "full",

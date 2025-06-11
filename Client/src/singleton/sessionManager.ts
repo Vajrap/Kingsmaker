@@ -58,7 +58,7 @@ class SessionManager {
     if (!token) return false;
 
     try {
-      const response = await fetch('http://localhost:3000/api/auth', {
+      const response = await fetch('http://localhost:3000/api', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

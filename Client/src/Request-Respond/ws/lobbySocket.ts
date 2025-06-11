@@ -13,6 +13,8 @@ export type LobbyEventHandler = {
   onGameStarting?: (roomId: string, turnOrder: string[]) => void;
   onGameStarted?: (roomId: string, gameId: string) => void;
   onRoomList?: (rooms: GameRoom[]) => void;
+  onRoomInfoAndJoin?: (room: GameRoom) => void;
+  onRoomPresence?: (roomId: string, userId: string) => boolean;
   onError?: (message: string) => void;
   onConnected?: () => void;
   onDisconnected?: () => void;
@@ -183,6 +185,16 @@ class LobbySocket {
       case 'room-list':
         this.handlers.onRoomList?.(message.body.rooms);
         break;
+      case 'room-info':
+        this.handlers.onRoomInfoAndJoin?.(message.body.room);
+        break;
+      case 'room-presence':
+        this.handlers.onRoomPresence?.(message.body.roomId, message.body.userId);
+        break;
+      case 'room-presence-check':
+        // Respond to presence check from server
+        this.handlePresenceCheck(message.body.roomId, message.body.userId, message.body.timestamp);
+        break;
       case 'error':
         this.handlers.onError?.(message.body.message);
         break;
@@ -195,6 +207,39 @@ class LobbySocket {
       this.ws.send(JSON.stringify(message));
     } else {
       console.warn('Cannot send message: WebSocket not connected or authenticated');
+    }
+  }
+
+  private handlePresenceCheck(roomId: string, userId: string, timestamp: number) {
+    console.log(`=== CLIENT RECEIVED PRESENCE CHECK ===`);
+    console.log(`RoomId: ${roomId}, UserId: ${userId}, Timestamp: ${timestamp}`);
+    
+    // Only respond if we're actually in this room and this is for us
+    const session = sessionManager.getSession();
+    if (!session || !this.handlers.onRoomPresence) {
+      console.log(`No session (${!!session}) or no onRoomPresence handler (${!!this.handlers.onRoomPresence})`);
+      return;
+    }
+    
+    // Check if we're actually in this room
+    const isInRoom = this.handlers.onRoomPresence(roomId, userId);
+    console.log(`Am I in room? ${isInRoom}`);
+    
+    if (isInRoom) {
+      // Send presence response with session ID
+      const responseMessage = {
+        head: "room-presence-response" as const,
+        body: { 
+          roomId, 
+          timestamp,
+          sessionId: session.sessionID 
+        }
+      };
+      console.log(`📤 Sending presence response:`, responseMessage);
+      this.send(responseMessage);
+      console.log(`✅ Sent presence response for room ${roomId}`);
+    } else {
+      console.log(`❌ Ignoring presence check for room ${roomId} - not in room`);
     }
   }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from "react";
+import React, { useState, useEffect, type FormEvent } from "react";
 import { LoginView } from "./index.view";
 import RegisterDialogue from "./Register/register.viewModel";
 import { sendLoginRequest } from "@/Request-Respond/api/auth/login";
@@ -6,7 +6,7 @@ import GuestDialogue from "./Guest/guest.viewModel";
 import ForgotDialogue from "./ForgotPassword/forgot.viewModel";
 import { sessionManager } from "@/singleton/sessionManager";
 
-export default function LoginContainer() {
+export const IndexViewModel: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");

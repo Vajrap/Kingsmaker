@@ -12,7 +12,7 @@ export async function sendForgotRequest(
   };
 
   const response = await sendRestRequest(
-    "http://localhost:3000/api/forgot",
+    "http://localhost:3000/api",
     "POST",
     body,
   );

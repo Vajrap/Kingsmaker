@@ -12,13 +12,13 @@ export async function sendGuestLoginRequest(
         sessionID: localStorage.getItem("kingsmaker-session.sessionID") || "",
       },
     };
-  
+
     const response = await sendRestRequest(
-      "http://localhost:3000/api/guest",
+      "http://localhost:3000/api",
       "POST",
       body,
     );
-  
+
     if (response.head === "guest") {
       // Successful guest login - save session and redirect
       sessionManager.saveSession({
@@ -32,6 +32,6 @@ export async function sendGuestLoginRequest(
       // Redirect to lobby
       window.location.href = '/lobby';
     }
-  
+
     return response;
   }
