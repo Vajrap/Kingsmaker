@@ -1,6 +1,5 @@
 import { type ApiResponse, type LoginResponse, type LoginBody, errorRes, ok } from "@shared/types/types";
 import { prisma } from "../lib/prisma";
-import bcrypt from 'bcrypt';
 
 export async function handleLogin({ body }: {body: LoginBody}): Promise<ApiResponse<LoginResponse>> {
     const user = await findUser(body.username);
@@ -27,6 +26,7 @@ export async function handleLogin({ body }: {body: LoginBody}): Promise<ApiRespo
 
     const data = {
         id: user.id,
+        nameAlias: user.nameAlias,
         username: user.username,
         email: user.email,
         type: user.type,
@@ -45,6 +45,6 @@ async function findUser(username: string): Promise<any | null> {
 }
 
 async function validatePassword(user: any, password: string): Promise<boolean> {
-    let result = await bcrypt.compare(password, user.password);
+    let result = await Bun.password.verify(password, user.password);
     return result;
 }

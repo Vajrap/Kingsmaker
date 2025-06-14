@@ -33,6 +33,7 @@ export type LoginBody = {
 
 export type LoginResponse = {
   id: number;
+  nameAlias: string;
   username: string;
   email: string;
   type: 'registered' | 'guest' | 'admin';
@@ -47,6 +48,7 @@ export type RegisterBody = {
 
 export type RegisterResponse = {
   id: number;
+  nameAlias: string;
   username: string;
   email: string;
   type: 'registered' | 'guest' | 'admin';

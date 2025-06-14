@@ -1,15 +1,15 @@
 import { errorRes, ok, type ApiResponse, type RegisterBody, type RegisterResponse } from "@shared/types/types";
 import { prisma } from "../lib/prisma";
-import bcrypt from 'bcrypt';
+import { getNewNameAlias } from "logic/nameAlias";
 
 export async function handleRegister({ body }: { body: RegisterBody }): Promise<ApiResponse<RegisterResponse>> {
     const userNameAvailable = await isUserNameAvailable(body.username)
-    if (userNameAvailable) {
+    if (!userNameAvailable) {
         return errorRes("User name is already used.");
     }
 
     const emailAvailable = await isEmailAvailable(body.email)
-    if (emailAvailable) {
+    if (!emailAvailable) {
         return errorRes("Email is already taken");
     }
 
@@ -17,12 +17,17 @@ export async function handleRegister({ body }: { body: RegisterBody }): Promise<
         return errorRes("Password is invalid");
     }
 
-    const hashedPassword = await bcrypt.hash(body.password, 10);
+    const hashedPassword = await Bun.password.hash(body.password);
+    const nameAlias = await getNewNameAlias();
+    if (!nameAlias) {
+        return errorRes("Failed to generate name alias");
+    }
 
     let createdUser = await prisma.user.create({
         data: {
             username: body.username,
             email: body.email,
+            nameAlias: nameAlias,
             password: hashedPassword,
             isConfirmed: false,
             type: "registered"
@@ -33,6 +38,7 @@ export async function handleRegister({ body }: { body: RegisterBody }): Promise<
 
     return ok<RegisterResponse>(createdUser)
 }
+
 
 function sendConfirmationEmail(user: any) {
     // Implementation of sending confirmation email

@@ -13,14 +13,11 @@ COPY database ./database
 # Copy the specific service
 COPY services/auth ./services/auth
 
-# Set up environment for Prisma
-RUN echo "DATABASE_URL=postgresql://postgres:postgres@db:5432/kingsmaker" > .env
-
 # Install all workspace dependencies
 RUN bun install
 
-# Generate Prisma client for auth service AFTER install (production optimized)
-RUN cd services/auth && bunx prisma generate --schema=./prisma/schema.prisma --no-engine
+# Generate Prisma client for auth service AFTER install
+RUN cd services/auth && bunx prisma generate --schema=./prisma/schema.prisma
 
 # Build shared dependencies first
 RUN cd shared && bun run build

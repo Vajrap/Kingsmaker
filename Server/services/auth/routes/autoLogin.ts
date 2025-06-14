@@ -21,6 +21,7 @@ export async function handleAutoLogin({ body }: { body: AutoLoginBody }): Promis
     const data = {
         id: user.id,
         username: user.username,
+        nameAlias: user.nameAlias,
         email: user.email,
         type: user.type,
         sessionToken: session.id

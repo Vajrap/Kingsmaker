@@ -14,7 +14,7 @@ model User {
     type          UserType
     email         String    @unique
     password      String
-    nameAlias     String?
+    nameAlias     String    @unique
     isConfirmed   Boolean   @default(false)
     highestScore  Int       @default(0)
     totalGames    Int       @default(0)

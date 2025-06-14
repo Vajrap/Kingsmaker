@@ -22,11 +22,7 @@ services:
         depends_on:
             - db
         environment:
-            DATABASE_HOST: db
-            DATABASE_USER: postgres
-            DATABASE_PASSWORD: postgres
-            DATABASE_NAME: kingsmaker
-            DATABASE_PORT: 5432
+            DATABASE_URL: postgresql://postgres:postgres@db:5432/kingsmaker
 
     chat:
         build:

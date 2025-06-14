@@ -1,4 +1,18 @@
-// Export all shared types and utilities
-export * from './types/types';
-// export * from './utils/email';
-// export * from './utils/validation'; 
+// types/types.ts
+function errorRes(message) {
+  return {
+    success: false,
+    message
+  };
+}
+function ok(data, message) {
+  return {
+    success: true,
+    data,
+    message
+  };
+}
+export {
+  ok,
+  errorRes
+};

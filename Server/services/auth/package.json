@@ -6,7 +6,7 @@
     "dev": "bun run --watch index.ts",
     "build": "bun build ./index.ts --outdir ./dist --target node",
     "start": "bun run dist/index.js",
-    "db:generate": "bunx prisma generate --no-engine"
+    "db:generate": "bunx prisma generate"
   },
   "dependencies": {
     "@elysiajs/cors": "^1.3.3",
@@ -17,7 +17,8 @@
     "dotenv": "^16.5.0",
     "elysia": "^1.3.4",
     "hono": "^4.1.0",
-    "nodemailer": "^6.9.12"
+    "nodemailer": "^6.9.12",
+    "unique-names-generator": "^4.7.1"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
