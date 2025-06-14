@@ -8,5 +8,11 @@
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.9.0"
+  },
+  "prisma": {
+    "schema": "../../database/prisma/schema.prisma"
   }
 }

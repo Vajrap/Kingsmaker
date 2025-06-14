@@ -1,12 +1,32 @@
 {
-  "name": "auth",
-  "module": "index.ts",
-  "type": "module",
+  "name": "@kingsmaker/auth-service",
+  "version": "1.0.0",
   "private": true,
-  "devDependencies": {
-    "@types/bun": "latest"
+  "scripts": {
+    "dev": "bun run --watch index.ts",
+    "build": "bun build ./index.ts --outdir ./dist --target node",
+    "start": "bun run dist/index.js",
+    "db:generate": "bunx prisma generate"
   },
-  "peerDependencies": {
-    "typescript": "^5"
+  "dependencies": {
+    "@elysiajs/cors": "^1.3.3",
+    "@kingsmaker/shared": "file:../../shared",
+    "@prisma/client": "^6.9.0",
+    "bcrypt": "^6.0.0",
+    "bun-types": "latest",
+    "dotenv": "^16.5.0",
+    "elysia": "^1.3.4",
+    "hono": "^4.1.0",
+    "nodemailer": "^6.9.12"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/bun": "latest",
+    "@types/nodemailer": "^6.4.14",
+    "prisma": "^6.9.0",
+    "typescript": "^5.0.0"
+  },
+  "prisma": {
+    "schema": "./prisma/schema.prisma"
   }
 }

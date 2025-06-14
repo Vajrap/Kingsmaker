@@ -1,0 +1,14 @@
+{
+  "name": "kingsmaker-server",
+  "private": true,
+  "workspaces": [
+    "shared",
+    "database",
+    "services/*"
+  ],
+  "scripts": {
+    "build": "bun run build:prisma && bun run build:services",
+    "build:prisma": "cd database && bunx prisma generate",
+    "build:services": "cd services && bun run build"
+  }
+} 

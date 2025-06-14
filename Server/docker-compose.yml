@@ -1,66 +1,112 @@
-version: '3.8'
-
 services:
-  db:
-    image: postgres:15
-    container_name: kingsmaker_db
-    restart: always
-    ports:
-      - "7000:5432"
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: kingsmaker
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
+    db:
+        image: postgres:15
+        container_name: kingsmaker_db
+        restart: always
+        ports:
+            - "7432:5432"
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: kingsmaker
+        volumes:
+            - postgres-data:/var/lib/postgresql/data
 
-  auth:
-    build: ./services/auth
-    container_name: auth_service
-    ports:
-      - "7001:3000"
-    depends_on:
-      - db
+    auth:
+        build:
+            context: .
+            dockerfile: services/auth/Dockerfile
+        container_name: auth_service
+        ports:
+            - "7001:3000"
+        depends_on:
+            - db
+        environment:
+            DATABASE_HOST: db
+            DATABASE_USER: postgres
+            DATABASE_PASSWORD: postgres
+            DATABASE_NAME: kingsmaker
+            DATABASE_PORT: 5432
 
-  chat:
-    build: ./services/chat
-    container_name: chat_service
-    ports:
-      - "7002:3000"
-    depends_on:
-      - db
+    chat:
+        build:
+            context: .
+            dockerfile: services/chat/Dockerfile
+        container_name: chat_service
+        ports:
+            - "7002:3000"
+        depends_on:
+            - db
+        environment:
+            DATABASE_HOST: db
+            DATABASE_USER: postgres
+            DATABASE_PASSWORD: postgres
+            DATABASE_NAME: kingsmaker
+            DATABASE_PORT: 5432
 
-  game:
-    build: ./services/game
-    container_name: game_service
-    ports:
-      - "7003:3000"
-    depends_on:
-      - db
+    game:
+        build:
+            context: .
+            dockerfile: services/game/Dockerfile
+        container_name: game_service
+        ports:
+            - "7003:3000"
+        depends_on:
+            - db
+        environment:
+            DATABASE_HOST: db
+            DATABASE_USER: postgres
+            DATABASE_PASSWORD: postgres
+            DATABASE_NAME: kingsmaker
+            DATABASE_PORT: 5432
 
-  lobby:
-    build: ./services/lobby
-    container_name: lobby_service
-    ports:
-      - "7004:3000"
-    depends_on:
-      - db
+    lobby:
+        build:
+            context: .
+            dockerfile: services/lobby/Dockerfile
+        container_name: lobby_service
+        ports:
+            - "7004:3000"
+        depends_on:
+            - db
+        environment:
+            DATABASE_HOST: db
+            DATABASE_USER: postgres
+            DATABASE_PASSWORD: postgres
+            DATABASE_NAME: kingsmaker
+            DATABASE_PORT: 5432
 
-  waitingroom:
-    build: ./services/waitingRoom
-    container_name: waitingroom_service
-    ports:
-      - "7005:3000"
-    depends_on:
-      - db
+    waitingroom:
+        build:
+            context: .
+            dockerfile: services/waitingRoom/Dockerfile
+        container_name: waitingroom_service
+        ports:
+            - "7005:3000"
+        depends_on:
+            - db
+        environment:
+            DATABASE_HOST: db
+            DATABASE_USER: postgres
+            DATABASE_PASSWORD: postgres
+            DATABASE_NAME: kingsmaker
+            DATABASE_PORT: 5432
 
-  store:
-    build: ./services/store
-    container_name: store_service
-    ports:
-      - "7006:3000"
-    depends_on:
-      - db
+    store:
+        build:
+            context: .
+            dockerfile: services/store/Dockerfile
+        container_name: store_service
+        ports:
+            - "7006:3000"
+        depends_on:
+            - db
+        environment:
+            DATABASE_HOST: db
+            DATABASE_USER: postgres
+            DATABASE_PASSWORD: postgres
+            DATABASE_NAME: kingsmaker
+            DATABASE_PORT: 5432
 
 volumes:
-  postgres-data:
+    postgres-data:
