@@ -1,4 +1,4 @@
-import type { ClientMessage, ServerError, ServerMessage} from "@/Request-Respond/messages";
+import type { ServerError, ServerMessage} from "@/Request-Respond/messages";
 import { sendRestRequest } from "@/Request-Respond/ws/sendRequest";
 import { sessionManager } from "@/singleton/sessionManager";
 
@@ -6,17 +6,16 @@ export async function sendLoginRequest(
   username: string,
   password: string,
 ): Promise<ServerMessage | ServerError> {
-  const body: ClientMessage = {
-    head: "login",
-    body: {
-      username,
-      password,
-      sessionID: localStorage.getItem("kingsmaker-session.sessionID") || "",
-    },
+  const body: {
+    username: string;
+    password: string;
+  } = {
+    username,
+    password,
   };
 
   const response = await sendRestRequest(
-    "http://localhost:3000/api",
+    "http://localhost:7001/login",
     "POST",
     body,
   );

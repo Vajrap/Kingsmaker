@@ -1,29 +1,9 @@
-import {
-  Box,
-  Button,
-  Input,
-  Stack,
-  Text,
-  Portal,
-  DialogBackdrop,
-  DialogPositioner,
-  DialogBody,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  Dialog,
-  Link,
-} from "@chakra-ui/react";
+import { Box, Button, Input, Stack, Text, Portal, DialogBackdrop, DialogPositioner, DialogBody, DialogContent,
+  DialogFooter, DialogHeader, DialogTitle, Dialog, Link } from "@chakra-ui/react";
 import { FormControl, FormLabel } from "@chakra-ui/form-control";
-import type { Dispatch, SetStateAction } from "react";
-import {
-  dialogBoxStyle,
-  headingStyle,
-  inputStyle,
-  subHeadingStyle,
-  warningStyle,
-} from "@/theme/styles";
+import { useState, type Dispatch, type SetStateAction } from "react";
+import { dialogBoxStyle, headingStyle, inputStyle, subHeadingStyle, warningStyle } from "@/theme/styles";
+import { sendRegisterRequest } from "@/Request-Respond/api/auth/register";
 
 function validateEmail(email: string) {
   return /.+@.+\..+/.test(email);
@@ -42,41 +22,65 @@ function validatePassword(password: string) {
   );
 }
 
-export default function RegisterView({
+export default function RegisterModal({
   isOpen,
   onClose,
-  email,
-  setEmail,
-  username,
-  setUsername,
-  password,
-  setPassword,
-  confirmPassword,
-  setConfirmPassword,
-  acceptTerms,
-  setAcceptTerms,
-  error,
-  success,
-  loading,
-  onRegister,
 }: {
   isOpen: boolean;
   onClose: () => void;
-  email: string;
-  setEmail: Dispatch<SetStateAction<string>>;
-  username: string;
-  setUsername: Dispatch<SetStateAction<string>>;
-  password: string;
-  setPassword: Dispatch<SetStateAction<string>>;
-  confirmPassword: string;
-  setConfirmPassword: Dispatch<SetStateAction<string>>;
-  acceptTerms: boolean;
-  setAcceptTerms: Dispatch<SetStateAction<boolean>>;
-  error: string;
-  success: string;
-  loading: boolean;
-  onRegister: (e: React.FormEvent) => void;
 }) {
+  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(false);
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    setLoading(true);
+    const result = await sendRegisterRequest(email, username, password);
+    setLoading(false);
+
+    if (result.head === "error") {
+      setError(result.body.message);
+      return;
+    }
+
+    if (result.head !== "register") {
+      console.error(`Unexpected result`, result);
+      return;
+    }
+
+    if (result.body.status === true) {
+      setSuccess("Registration successful!");
+    } else {
+      setError("Registration failed.");
+    }
+  };
+
+  const handleClose = () => {
+    setEmail("");
+    setUsername("");
+    setPassword("");
+    setConfirmPassword("");
+    setAcceptTerms(false);
+    setError("");
+    setSuccess("");
+    setLoading(false);
+    onClose();
+  };
+
   const isFormValid =
     validateEmail(email) &&
     validateUsername(username) &&
@@ -85,27 +89,30 @@ export default function RegisterView({
     acceptTerms;
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog.Root open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <Portal>
         <DialogBackdrop />
         <DialogPositioner>
           <DialogContent {...dialogBoxStyle} boxShadow="2xl">
-            {renderHeader()}
+            <DialogHeader textAlign="center">
+              <DialogTitle {...headingStyle}>KingsMaker's Register</DialogTitle>
+            </DialogHeader>
+
             <DialogBody>
-              <form onSubmit={onRegister}>
+              <form onSubmit={handleRegister}>
                 {renderAccountSection(email, setEmail, username, setUsername)}
-                {renderPasswordSection(
-                  password,
-                  setPassword,
-                  confirmPassword,
-                  setConfirmPassword,
-                )}
+                {renderPasswordSection(password, setPassword, confirmPassword, setConfirmPassword)}
                 {renderTermsCheckbox(acceptTerms, setAcceptTerms)}
                 {renderStatus(error, success)}
-                {renderActions(onClose, loading, isFormValid)}
+                {renderActions(handleClose, loading, isFormValid)}
               </form>
             </DialogBody>
-            {renderFooter()}
+
+            <DialogFooter gap={3} height={100}>
+              <Text fontSize="xs" color="brown.500" textAlign="center" w="full">
+                &copy; {new Date().getFullYear()} KingsMaker. All rights reserved.
+              </Text>
+            </DialogFooter>
           </DialogContent>
         </DialogPositioner>
       </Portal>
@@ -113,13 +120,7 @@ export default function RegisterView({
   );
 }
 
-function renderHeader() {
-  return (
-    <DialogHeader textAlign="center">
-      <DialogTitle {...headingStyle}>KingsMaker's Register</DialogTitle>
-    </DialogHeader>
-  );
-}
+// === Helper Functions ===
 
 function renderAccountSection(
   email: string,
@@ -130,17 +131,13 @@ function renderAccountSection(
   return (
     <Stack gap={4} mt={2}>
       <FormControl isRequired>
-        <FormLabel {...subHeadingStyle} height={"2rem"}>
+        <FormLabel {...subHeadingStyle} height="2rem">
           Email
         </FormLabel>
-        <Input
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          {...inputStyle}
-        />
+        <Input value={email} onChange={(e) => setEmail(e.target.value)} {...inputStyle} />
         <Box minH="1rem">
           <Text
-            opacity={validateEmail(email) === true ? 0 : 1}
+            opacity={validateEmail(email) ? 0 : 1}
             transition="opacity 0.2s"
             {...warningStyle}
           >
@@ -148,22 +145,19 @@ function renderAccountSection(
           </Text>
         </Box>
       </FormControl>
+
       <FormControl isRequired>
-        <FormLabel {...subHeadingStyle} height={"2rem"}>
+        <FormLabel {...subHeadingStyle} height="2rem">
           Username
         </FormLabel>
-        <Input
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          {...inputStyle}
-        />
+        <Input value={username} onChange={(e) => setUsername(e.target.value)} {...inputStyle} />
         <Box minH="1rem">
           <Text
             opacity={username.length < 5 ? 1 : 0}
             transition="opacity 0.2s"
             {...warningStyle}
           >
-            User name needs to be at least 5 characters long.
+            Username must be at least 5 characters.
           </Text>
         </Box>
       </FormControl>
@@ -180,7 +174,7 @@ function renderPasswordSection(
   return (
     <Stack gap={4} mt={4}>
       <FormControl isRequired>
-        <FormLabel {...subHeadingStyle} height={"2rem"}>
+        <FormLabel {...subHeadingStyle} height="2rem">
           Password
         </FormLabel>
         <Input
@@ -191,17 +185,17 @@ function renderPasswordSection(
         />
         <Box minH="1rem">
           <Text
-            opacity={validatePassword(password) === true ? 0 : 1}
+            opacity={validatePassword(password) ? 0 : 1}
             transition="opacity 0.2s"
             {...warningStyle}
           >
-            At least 5 characters long; Upper, Lower, and number.
+            At least 5 characters long; must include upper, lower, and number.
           </Text>
         </Box>
       </FormControl>
 
       <FormControl isRequired>
-        <FormLabel {...subHeadingStyle} height={"2rem"}>
+        <FormLabel {...subHeadingStyle} height="2rem">
           Confirm Password
         </FormLabel>
         <Input
@@ -302,15 +296,5 @@ function renderActions(
         Register
       </Button>
     </Box>
-  );
-}
-
-function renderFooter() {
-  return (
-    <DialogFooter gap={3} height={100}>
-      <Text fontSize="xs" color="brown.500" textAlign="center" w="full">
-        &copy; {new Date().getFullYear()} KingsMaker. All rights reserved.
-      </Text>
-    </DialogFooter>
   );
 }
