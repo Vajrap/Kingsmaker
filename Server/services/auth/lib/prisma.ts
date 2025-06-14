@@ -1,3 +1,4 @@
+// @ts-ignore - Generated during Docker build
 import { PrismaClient } from '../generated/prisma';
 
 declare global {
