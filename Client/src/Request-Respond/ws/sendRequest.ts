@@ -1,12 +1,11 @@
-import type { ClientMessage, ServerMessage, ServerError } from "../messages";
-// import { processQueue, queue, handleResponse } from "./queue";
+import type { ApiResponse, AuthBody, LoginBody, LoginResponse, RegisterResponse } from "@shared/types/types";
 
 export async function sendRestRequest(
   url: string,
   method: "POST" | "GET" | "PUT" | "DELETE" = "POST",
-  body: ClientMessage,
+  body: LoginBody | AuthBody,
   timeout = 5000,
-): Promise<ServerMessage | ServerError> {
+): Promise<ApiResponse<LoginResponse> | ApiResponse<RegisterResponse>> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
 
@@ -23,38 +22,25 @@ export async function sendRestRequest(
     clearTimeout(timer);
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
+      const error = await response.json().catch(() => ({ message: "Unknown error" }));
       return {
-        head: "error",
-        body: {
-          message: error.message || "Request failed",
-        },
+        success: false,
+        message: error.message,
       };
     }
 
-    return response.json();
+    return {
+      success: true,
+      data: await response.json(),
+    };
   } catch (err) {
     clearTimeout(timer);
     return {
-      head: "error",
-      body: {
-        message:
-          err instanceof DOMException && err.name === "AbortError"
-            ? "Request timed out"
-            : (err as Error).message,
-      },
+      success: false,
+      message:
+        err instanceof DOMException && err.name === "AbortError"
+          ? "Request timed out"
+          : (err as Error).message,
     };
   }
 }
-
-// export function sendQueuedWSRequest(
-//   message: ClientMessage,
-//   signal?: AbortSignal,
-// ): Promise<ServerMessage | ServerError> {
-//   return new Promise((resolve, reject) => {
-//     queue.push({ message, resolve, reject, signal });
-//     processQueue();
-//   });
-// }
-
-// export { handleResponse };

@@ -31,6 +31,10 @@ export type LoginBody = {
     password: string;
 }
 
+export type AuthBody = {
+  token: string;
+}
+
 export type LoginResponse = {
   sessionToken: string;
   userType: 'registered' | 'guest' | 'admin';
@@ -59,10 +63,6 @@ export type LogoutBody = {
 export type LogoutResponse = {
   message: string;
 };
-
-export type AutoLoginBody = {
-    sessionToken: string;
-}
 
 // Lobby and Room related types
 export interface SessionData {
@@ -96,6 +96,7 @@ export interface PlayerSlot {
         skinId?: string;
     };
     lastSeen: string;
+    character?: PlayerCharacterSetup;
 }
 
 export interface PlayerProfile {
@@ -163,3 +164,84 @@ export interface GameEndedEvent {
     roomId: string;
     gameId: string;
 }
+
+// Game Room types (for client compatibility)
+export interface GameRoom {
+    id: string;
+    name: string;
+    hostId: string;
+    hostUsername: string;
+    state: 'WAITING' | 'STARTING' | 'IN_PROGRESS';
+    players: PlayerSlot[];
+    settings: RoomSettings;
+    mapSeed?: string;
+}
+
+export interface RoomSettings {
+    maxPlayers: 2 | 3 | 4;
+    spectatorMode: boolean;
+    turnTimeLimit?: number;
+}
+
+// Character customization types
+export interface PlayerCharacterSetup {
+    portraitId: string;
+    name: string;
+    stats: {
+        might: number;
+        intelligence: number;
+        dexterity: number;
+    };
+}
+
+// Map types
+export type TileType = 'castle' | 'fortress' | 'city' | 'village' | 'forest' | 'mine' | 'field' | 'ruins' | 'plain' | 'road';
+
+export interface GameTile {
+    id: string;
+    x: number;
+    y: number;
+    type: TileType;
+    ownerId?: string;
+    resources?: number;
+    captains: string[];
+    unrest: number;
+    buildings?: string[];
+}
+
+export interface GameMap {
+    id: string;
+    width: number;
+    height: number;
+    seed: string;
+    tiles: GameTile[];
+    playerStartPositions: { [playerId: string]: { x: number; y: number } };
+}
+
+export type MapSize = 'small' | 'medium' | 'large';
+
+export interface MapGenerationConfig {
+    size: MapSize;
+    playerCount: number;
+    seed?: string;
+}
+
+// Map configuration constants
+export const MAP_CONFIGS = {
+    small: { width: 4, height: 6, totalTiles: 24 },
+    medium: { width: 6, height: 8, totalTiles: 48 },
+    large: { width: 8, height: 10, totalTiles: 80 }
+};
+
+export const TILE_DISTRIBUTION: Record<TileType, number> = {
+    castle: 4,     // Player starting positions
+    fortress: 2,   // Defensive structures
+    city: 3,       // Major settlements
+    village: 6,    // Minor settlements
+    forest: 4,     // Wood resource
+    mine: 3,       // Iron resource
+    field: 4,      // Food resource
+    ruins: 2,      // Exploration sites
+    plain: 0,      // Will be filled automatically
+    road: 0        // Will be generated based on connections
+};

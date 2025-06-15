@@ -1,15 +1,13 @@
-import type { ServerError, ServerMessage} from "@/Request-Respond/messages";
+
 import { sendRestRequest } from "@/Request-Respond/ws/sendRequest";
 import { sessionManager } from "@/singleton/sessionManager";
+import type { ApiResponse, LoginBody, LoginResponse } from "@shared/types/types";
 
 export async function sendLoginRequest(
   username: string,
   password: string,
-): Promise<ServerMessage | ServerError> {
-  const body: {
-    username: string;
-    password: string;
-  } = {
+): Promise<ApiResponse<LoginResponse>> {
+  const body: LoginBody = {
     username,
     password,
   };
@@ -18,15 +16,14 @@ export async function sendLoginRequest(
     "http://localhost:7001/login",
     "POST",
     body,
-  );
+  ) as ApiResponse<LoginResponse>;
 
-  if (response.head === "login") {
+  if (response.success) {
     // Successful login - save session and redirect
     sessionManager.saveSession({
-      sessionID: response.body.sessionID,
-      userID: response.body.userType === 'guest' ? response.body.username : response.body.username, // For guests, we use username as ID
-      userType: response.body.userType as 'registered' | 'guest',
-      username: response.body.username,
+      sessionID: response.data.sessionToken,
+      userType: response.data.userType as 'registered' | 'guest',
+      username: response.data.username,
       loginTime: Date.now(),
     });
 

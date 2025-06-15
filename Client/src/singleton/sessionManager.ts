@@ -1,7 +1,6 @@
 
 export interface UserSession {
   sessionID: string;
-  userID: string;
   userType: 'registered' | 'guest';
   username: string;
   loginTime: number;
@@ -75,7 +74,6 @@ class SessionManager {
         // Update session with fresh data
         const session = this.getSession();
         if (session) {
-          session.userID = result.body.userID;
           session.userType = result.body.userType;
           session.username = result.body.username;
           this.saveSession(session);

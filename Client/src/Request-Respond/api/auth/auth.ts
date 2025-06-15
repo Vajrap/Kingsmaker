@@ -1,35 +1,33 @@
-import type { ClientMessage, ServerError, ServerMessage } from "@/Request-Respond/messages";
 import { sendRestRequest } from "@/Request-Respond/ws/sendRequest";
 import { sessionManager } from "@/singleton/sessionManager";
+import type { ApiResponse, AuthBody, LoginResponse } from "@shared/types/types";
 
-export async function validateSessionRequest(): Promise<ServerMessage | ServerError> {
+export async function validateSessionRequest(): Promise<ApiResponse<LoginResponse>> {
   const token = sessionManager.getSessionToken();
   
   if (!token) {
     return {
-      head: "error",
-      body: { message: "No session token found" }
+      success: false,
+      message: "No session token found"
     };
   }
 
-  const body: ClientMessage = {
-    head: "auth",
-    body: { token },
+  const body: AuthBody = {
+    token,
   };
 
   const response = await sendRestRequest(
     "http://localhost:3000/api",
     "POST",
     body,
-  );
+  ) as ApiResponse<LoginResponse>;
 
-  if (response.head === "auth-ok") {
+  if (response.success) {
     // Update session with fresh data
     const session = sessionManager.getSession();
     if (session) {
-      session.userID = response.body.userID;
-      session.userType = response.body.userType as 'registered' | 'guest';
-      session.username = response.body.username;
+      session.userType = response.data.userType as 'registered' | 'guest';
+      session.username = response.data.username;
       sessionManager.saveSession(session);
     }
   } else {

@@ -1,18 +1,15 @@
-import type { ClientMessage, ServerError, ServerMessage } from "../../messages";
+import type { ApiResponse, RegisterBody, RegisterResponse } from "@shared/types/types";
 import { sendRestRequest } from "@/Request-Respond/ws/sendRequest";
 
 export async function sendRegisterRequest(
   email: string,
   username: string,
   password: string,
-): Promise<ServerMessage | ServerError> {
-  const body: ClientMessage = {
-    head: "register",
-    body: {
+): Promise<ApiResponse<RegisterResponse>> {
+  const body: RegisterBody = {
       email,
       username,
       password,
-    },
   };
 
   const response = await sendRestRequest(
@@ -21,5 +18,5 @@ export async function sendRegisterRequest(
     body,
   );
 
-  return response;
+  return response as ApiResponse<RegisterResponse>;
 }

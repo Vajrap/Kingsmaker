@@ -7,7 +7,7 @@ COPY package.json ./
 COPY package-lock.json* ./
 
 # Copy shared package
-COPY shared ./shared
+COPY ../shared ./shared
 COPY database ./database
 
 # Copy the specific service

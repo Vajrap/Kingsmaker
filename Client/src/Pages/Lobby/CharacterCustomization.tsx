@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { PlayerCharacterSetup } from '@shared/types';
+import type { PlayerCharacterSetup } from '@shared/types/types';
 
 interface CharacterCustomizationProps {
   currentCharacter?: PlayerCharacterSetup;

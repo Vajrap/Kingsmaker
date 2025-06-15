@@ -1,5 +1,5 @@
 import React from 'react';
-import type { GameMap, GameTile, TileType } from '@shared/types/map';
+import type { GameMap, GameTile, TileType } from '@shared/types/types';
 import { TILE_COLORS } from '@/utils/mapGenerator';
 
 interface MapDisplayProps {

@@ -43,8 +43,8 @@ export default function LoginPage() {
     e.preventDefault();
     setError(""); setLoginMessage("Logging in...");
     const res = await sendLoginRequest(username, password);
-    if (res.head === "error") {
-      setError(res.body.message);
+    if (!res.success) {
+      setError(res.message);
       setLoginMessage("");
     } else {
       setLoginMessage("Login successful! Redirecting...");

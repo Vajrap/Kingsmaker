@@ -7,10 +7,12 @@
 ✅ COMPLETED:
 - Database service (PostgreSQL + Prisma)
 - Shared library (@kingsmaker/shared) + types
-- Auth service (Bun + JWT + Redis sessions)
+- Auth service (Bun + JWT + Redis sessions) 
 - Frontend login page (basic implementation)
 - Redis service (Docker + state management)
 - Lobby service (Bun + WebSocket + Redis)
+- Client lobby page (connected to Redis-backed lobby service)
+- Client lobby type system (shared types from server)
 
 🔄 IN PROGRESS:
 - Waiting room service architecture
@@ -19,7 +21,6 @@
 ⏳ PENDING:
 - Waiting room service (Go)
 - Game service (Go)  
-- Frontend lobby interface
 - Game client interface
 ```
 
@@ -59,6 +60,7 @@ game-service (Go:7003): ❌ NOT IMPLEMENTED
 ✅ auth-service ↔ redis (session storage)
 ✅ lobby-service ↔ redis (state + pub/sub)  
 ✅ lobby-service ← auth-service (session validation)
+✅ client ↔ lobby-service (WebSocket + Redis-backed rooms)
 ❌ waiting-room ↔ redis (not implemented)
 ❌ game-service ↔ redis (not implemented)
 ```

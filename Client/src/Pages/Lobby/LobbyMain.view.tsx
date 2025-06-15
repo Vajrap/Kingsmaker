@@ -1,4 +1,4 @@
-import type { GameRoom, RoomSettings } from '@shared/types';
+import type { WaitingRoomMetadata } from '@shared/types/types';
 import { 
   Badge, 
   Box, 
@@ -26,7 +26,7 @@ import {
   lobbyLoadingTextStyle,
 } from '@/theme/lobbyStyles';
 import { CreateRoomModal } from './components/CreateRoomModal';
-import { GameRoomView } from './GameRoomView';
+// import { GameRoomView } from './GameRoomView'; // TODO: Update for waiting room service
 import { RetryModal } from './components/RetryModal';
 import { ProfileModal } from './components/ProfileModal';
 import { SettingsModal } from './components/SettingsModal';
@@ -34,8 +34,8 @@ import { backgroundStyle, buttonStyle, headingStyle, subHeadingStyle, textStyle 
 
 export type LobbyMainViewProps = {
   // State
-  rooms: GameRoom[];
-  currentRoom: GameRoom | null;
+  rooms: WaitingRoomMetadata[];
+  currentRoom: WaitingRoomMetadata | null;
   isConnected: boolean;
   isLoading: boolean;
   showCreateModal: boolean;
@@ -55,7 +55,7 @@ export type LobbyMainViewProps = {
   onHandleRefreshRooms: () => void;
   onHandleJoinRoom: (roomId: string) => void;
   onRetryConnection: () => void;
-  onCreateRoom: (name: string, settings: RoomSettings) => void;
+  onCreateRoom: (name: string, maxPlayers: 2 | 3 | 4) => void;
 };
 
 export function LobbyMainView({
@@ -90,7 +90,17 @@ export function LobbyMainView({
 
   // Show room view if in a room
   if (currentRoom) {
-    return <GameRoomView room={currentRoom} onLeaveRoom={() => {}} onRoomUpdate={() => {}} />;
+    // TODO: GameRoomView needs to be updated for waiting room service
+    // For now, show a placeholder
+    return (
+      <div style={{ padding: '20px', textAlign: 'center' }}>
+        <h2>Room: {currentRoom.name}</h2>
+        <p>Players: {currentRoom.currentPlayers}/{currentRoom.maxPlayers}</p>
+        <p>Status: {currentRoom.state}</p>
+        <button onClick={() => window.location.reload()}>Back to Lobby</button>
+        <p><em>Room view will be implemented with waiting room service</em></p>
+      </div>
+    );
   }
 
   // Show room browser
@@ -137,7 +147,7 @@ export function LobbyMainView({
                     <Text {...lobbyTableSubTextStyle}>ID: {room.id}</Text>
                   </Box>
                   <Box {...lobbyTableCellStyle}>
-                    <Text {...lobbyTableTextStyle}>{room.players.length}/{room.settings.maxPlayers}</Text>
+                    <Text {...lobbyTableTextStyle}>{room.currentPlayers}/{room.maxPlayers}</Text>
                   </Box>
                   <Box {...lobbyTableCellStyle}>
                     <Badge colorScheme={room.state === 'WAITING' ? 'green' : room.state === 'STARTING' ? 'orange' : 'red'}>
@@ -147,7 +157,7 @@ export function LobbyMainView({
                   <Box {...lobbyTableCellStyle}>
                     <Button
                       onClick={() => onHandleJoinRoom(room.id)}
-                      disabled={room.state !== 'WAITING' || room.players.length >= room.settings.maxPlayers}
+                      disabled={room.state !== 'WAITING' || room.currentPlayers >= room.maxPlayers}
                       {...lobbyButtonStyle}
                       size="sm"
                     >
@@ -164,11 +174,11 @@ export function LobbyMainView({
       <CreateRoomModal 
         isOpen={showCreateModal} 
         onClose={() => onSetShowCreateModal(false)} 
-        onCreateRoom={onCreateRoom} 
+        onCreateRoom={(name, settings) => onCreateRoom(name, settings.maxPlayers)}
       />
 
       <ProfileModal 
-        isOpen={showProfileModal} 
+        isOpen={showProfileModal}
         onClose={() => onSetShowProfileModal(false)} 
       />
       

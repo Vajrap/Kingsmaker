@@ -4,7 +4,7 @@ import {
   type GameUIColorTheme,
 } from "@/theme/default";
 
-export let currentTheme: GameUIColorTheme = initTheme();
+export const currentTheme: GameUIColorTheme = initTheme();
 
 function initTheme() {
   const storageTheme = localStorage.getItem("kingsmaker-theme") ?? "classic";

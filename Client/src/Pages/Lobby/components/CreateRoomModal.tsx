@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import type { RoomSettings } from '@shared/types';
 import {
   Box,
   Button,
@@ -21,7 +20,11 @@ import { currentTheme } from '@/singleton/currentTheme';
 interface CreateRoomModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreateRoom: (name: string, settings: RoomSettings) => void;
+  onCreateRoom: (name: string, settings: {
+    maxPlayers: 2 | 3 | 4;
+    spectatorMode: boolean;
+    turnTimeLimit?: number;
+  }) => void;
 }
 
 export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
@@ -58,7 +61,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
       return;
     }
 
-    const settings: RoomSettings = {
+    const settings = {
       maxPlayers,
       spectatorMode,
       turnTimeLimit: hasTimeLimit ? turnTimeLimit : undefined

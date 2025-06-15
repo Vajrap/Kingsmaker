@@ -1,5 +1,5 @@
-import type { GameMap, GameTile, TileType, MapGenerationConfig } from '@shared/types/map';
-import { MAP_CONFIGS, TILE_DISTRIBUTION } from '@shared/types/map';
+import type { GameMap, GameTile, TileType, MapGenerationConfig } from '@shared/types/types';
+import { MAP_CONFIGS, TILE_DISTRIBUTION } from '@shared/types/types';
 
 // Seeded random number generator for reproducible maps
 class SeededRandom {
