@@ -1,14 +1,14 @@
-import { errorRes, ok, type ApiResponse, type AutoLoginBody, type LoginResponse } from "@shared/types/types";
+import { errorRes, ok, type ApiResponse, type AuthBody, type LoginResponse } from "@shared/types/types";
 import { prisma } from "../lib/prisma";
 import { SessionManager } from "../lib/session";
 
-export async function handleAutoLogin({ body }: { body: AutoLoginBody }): Promise<ApiResponse<LoginResponse>> {
+export async function handleAutoLogin({ body }: { body: AuthBody }): Promise<ApiResponse<LoginResponse>> {
     // First try to get session from Redis (faster)
-    const sessionData = await SessionManager.getSession(body.sessionToken);
+    const sessionData = await SessionManager.getSession(body.token);
     
     if (sessionData) {
         // Refresh session activity
-        await SessionManager.refreshSession(body.sessionToken);
+        await SessionManager.refreshSession(body.token);
         
         
         const data = {
@@ -16,7 +16,7 @@ export async function handleAutoLogin({ body }: { body: AutoLoginBody }): Promis
             nameAlias: sessionData.username, // Using username as nameAlias for now
             username: sessionData.username,
             userType: sessionData.userType,
-            sessionToken: body.sessionToken
+            sessionToken: body.token
         };
 
         return ok(data);
@@ -24,7 +24,7 @@ export async function handleAutoLogin({ body }: { body: AutoLoginBody }): Promis
 
     // Fallback to database if not in Redis
     const session = await prisma.session.findUnique({
-        where: { id: body.sessionToken },
+        where: { id: body.token },
     });
 
     if (!session || new Date() > session.expiresAt) {

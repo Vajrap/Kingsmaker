@@ -9,7 +9,7 @@
     "allowJs": true,
     "baseUrl": ".",
         "paths": {
-          "@shared/*": ["../../shared/*"]
+          "@shared/*": ["../../../shared/*"]
         },
 
     // Bundler mode

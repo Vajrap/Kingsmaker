@@ -10,7 +10,7 @@
     "sourceMap": true,
     "baseUrl": ".",
     "paths": {
-      "@shared/*": ["../../shared/*"]
+              "@shared/*": ["../../../shared/*"]
     },
     "types": ["bun-types", "node"],
     "resolveJsonModule": true,
