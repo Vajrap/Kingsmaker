@@ -1,6 +1,7 @@
-import { errorRes, ok, type ApiResponse, type LoginResponse } from "@shared/types/types";
+import { errorRes, ok, type ApiResponse, type LoginResponse, type SessionData } from "@shared/types/types";
 import { prisma } from "../lib/prisma";
 import { getNewNameAlias } from "logic/nameAlias";
+import { SessionManager } from "../lib/session";
 
 export async function handleGuest(): Promise<ApiResponse<LoginResponse>> {
     const nameAlias = await getNewNameAlias();
@@ -21,6 +22,8 @@ export async function handleGuest(): Promise<ApiResponse<LoginResponse>> {
 
     const now = new Date();
     const sessionToken = crypto.randomUUID();
+    
+    // Store session in database (existing behavior)
     await prisma.session.create({
         data: {
             id: sessionToken,
@@ -30,13 +33,23 @@ export async function handleGuest(): Promise<ApiResponse<LoginResponse>> {
         }
     });
 
-    const data: LoginResponse = {
-        id: guestUser.id,
-        nameAlias: guestUser.nameAlias,
+    // Store session in Redis for fast access by other services
+    const sessionData: SessionData = {
+        sessionToken: sessionToken,
+        userId: guestUser.id.toString(),
         username: guestUser.username,
-        email: guestUser.email,
-        type: "guest",
-        sessionToken
+        userType: "guest",
+        connectedAt: now.toISOString(),
+        lastSeen: now.toISOString()
+    };
+
+    await SessionManager.createSession(sessionToken, sessionData);
+
+    const data: LoginResponse = {
+        sessionToken,
+        userType: "guest",
+        username: guestUser.username,
+        nameAlias: guestUser.nameAlias,
     };
 
     return ok<LoginResponse>(data);

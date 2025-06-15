@@ -15,11 +15,10 @@ export type LoginBody = {
     password: string;
 };
 export type LoginResponse = {
-    id: number;
-    username: string;
-    email: string;
-    type: 'registered' | 'guest' | 'admin';
     sessionToken: string;
+    userType: 'registered' | 'guest' | 'admin';
+    username: string;
+    nameAlias: string;
 };
 export type RegisterBody = {
     username: string;

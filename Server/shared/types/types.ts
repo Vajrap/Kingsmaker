@@ -32,12 +32,10 @@ export type LoginBody = {
 }
 
 export type LoginResponse = {
-  id: number;
-  nameAlias: string;
-  username: string;
-  email: string;
-  type: 'registered' | 'guest' | 'admin';
   sessionToken: string;
+  userType: 'registered' | 'guest' | 'admin';
+  username: string;
+  nameAlias: string;
 };
 
 export type RegisterBody = {
@@ -68,10 +66,12 @@ export type AutoLoginBody = {
 
 // Lobby and Room related types
 export interface SessionData {
+    sessionToken: string;
     userId: string;
     userType: 'registered' | 'guest';
     username: string;
     connectedAt: string;
+    lastSeen: string;
 }
 
 export interface WaitingRoomMetadata {
