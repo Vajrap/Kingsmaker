@@ -7,7 +7,8 @@
 ✅ COMPLETED:
 - Database service (PostgreSQL + Prisma)
 - Shared library (@kingsmaker/shared) + types
-- Auth service (Bun + JWT + Redis sessions) 
+- Auth service (Bun + JWT + sessionManager integration) 
+- SessionManager service (Bun + in-memory session tracking)
 - Frontend login page (basic implementation)
 - Redis service (Docker + state management)
 - Lobby service (Bun + WebSocket + Redis)
@@ -27,9 +28,16 @@
 ## Service Architecture Status
 ```
 auth-service (Bun:7001): ✅ OPERATIONAL
-  - HTTP endpoints: login, register, guest, refresh
-  - JWT + session management via Redis
+  - HTTP endpoints: login, register, guest, refresh, autoLogin, logout
+  - Session management via sessionManager service
+  - Type-safe HTTP client for service communication
   - Database: User model + Session model
+
+sessionmanager-service (Bun:7007): ✅ OPERATIONAL
+  - HTTP endpoints: addConnection, removeConnection, getConnection, updatePresence
+  - In-memory user connection tracking (replaces Redis for sessions)
+  - One user per machine enforcement
+  - User presence tracking (IN_LOBBY, IN_WAITING_ROOM, IN_GAME, OFFLINE)
 
 lobby-service (Bun:7004): ✅ OPERATIONAL  
   - WebSocket server for real-time communication
@@ -57,7 +65,7 @@ game-service (Go:7003): ❌ NOT IMPLEMENTED
 
 ## Current Integration Points
 ```
-✅ auth-service ↔ redis (session storage)
+✅ auth-service ↔ sessionmanager-service (session tracking)
 ✅ lobby-service ↔ redis (state + pub/sub)  
 ✅ lobby-service ← auth-service (session validation)
 ✅ client ↔ lobby-service (WebSocket + Redis-backed rooms)

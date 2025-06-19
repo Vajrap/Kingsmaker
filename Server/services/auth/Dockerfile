@@ -1,23 +1,23 @@
-FROM oven/bun:1.0.35 as base
+FROM oven/bun:1.0.35 AS base
 
 WORKDIR /app
 
 # Copy the root workspace package.json to set up the workspace
-COPY package.json ./
-COPY package-lock.json* ./
+COPY Server/package.json ./
+COPY Server/package-lock.json* ./
 
 # Copy shared package
-COPY ../shared ./shared
-COPY database ./database
+COPY shared ./shared
+COPY Server/database ./database
 
 # Copy the specific service
-COPY services/auth ./services/auth
+COPY Server/services/auth ./services/auth
 
 # Install all workspace dependencies
 RUN bun install
 
-# Generate Prisma client for auth service AFTER install
-RUN cd services/auth && bunx prisma generate --schema=./prisma/schema.prisma
+# Generate Prisma client in shared
+RUN cd shared && bunx prisma generate --schema=./prisma/schema.prisma
 
 # Build shared dependencies first
 RUN cd shared && bun run build

@@ -4,14 +4,18 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "strict": true,
-    "noEmit": true,
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "outDir": "dist"
   },
   "include": [
-    "types/**/*"
+    "**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
   ]
 } 

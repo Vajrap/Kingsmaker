@@ -1,6 +1,8 @@
-import { type ApiResponse, type LoginResponse, type LoginBody, type SessionData, errorRes, ok } from "@shared/types/types";
-import { prisma } from "../lib/prisma";
-import { SessionManager } from "../lib/session";
+import { type User } from "@shared/prisma/generated";
+import { type LoginBody, type ApiResponse, type LoginResponse, errorRes, ok } from "@kingsmaker/shared/types/types";
+import { prisma } from "@shared/prisma/prisma";
+import { assignUniqueSessionId } from "logic/assignUniqueSessionId";
+import { addConnectionToSessionManager, checkConnectionInSessionManager } from "../lib/sessionServiceClient";
 
 export async function handleLogin({ body }: {body: LoginBody}): Promise<ApiResponse<LoginResponse>> {
     const user = await findUser(body.username);
@@ -13,42 +15,46 @@ export async function handleLogin({ body }: {body: LoginBody}): Promise<ApiRespo
         return errorRes("Invalid password");
     };
 
-    const now = new Date();
-    const sessionToken = crypto.randomUUID();
-
-    // Store session in database (existing behavior)
-    await prisma.session.create({
-        data: {
-            id: sessionToken,
-            userID: user.id,
-            expiresAt: new Date(now.getTime() + 1000 * 60 * 60 * 24 * 30),
-            createdAt: now
+    if (user.sessionExpireAt < new Date() || !user.sessionId) {
+        const result = await assignUniqueSessionId(user.id);
+        if (!result) {
+            return errorRes("Failed to update user session");
         }
-    });
+        user.sessionId = result.sessionId;
+        user.sessionExpireAt = result.expiresAt;
+    }
 
-    // Store session in Redis for fast access by other services
-    const sessionData: SessionData = {
-        sessionToken: sessionToken,
-        userId: user.id.toString(),
-        username: user.username,
-        userType: "registered",
-        connectedAt: now.toISOString(),
-        lastSeen: now.toISOString()
-    };
+    // Check if user is already connected (one user per machine enforcement)
+    const existingConnection = await checkConnectionInSessionManager(user.id);
+    if (existingConnection) {
+        // User already logged in, return existing session info
+        const data: LoginResponse = {
+            nameAlias: user.nameAlias,
+            username: user.username,
+            userType: "registered",
+            sessionId: user.sessionId
+        };
+        return ok<LoginResponse>(data);
+    }
 
-    await SessionManager.createSession(sessionToken, sessionData);
+    // Add connection to sessionManager
+    const sessionManagerResponse = await addConnectionToSessionManager(user);
+    if (!sessionManagerResponse) {
+        // SessionManager connection failed, but don't fail login entirely
+        console.warn("Failed to add connection to SessionManager, proceeding with login");
+    }
 
     const data: LoginResponse = {
         nameAlias: user.nameAlias,
         username: user.username,
         userType: "registered",
-        sessionToken
+        sessionId: user.sessionId
     };
 
     return ok<LoginResponse>(data)
 }
 
-async function findUser(username: string): Promise<any | null> {
+async function findUser(username: string): Promise<User | null> {
     return prisma.user.findUnique({
         where: {
             username: username

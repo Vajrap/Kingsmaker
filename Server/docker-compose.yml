@@ -24,8 +24,8 @@ services:
 
     auth:
         build:
-            context: .
-            dockerfile: services/auth/Dockerfile
+            context: ..
+            dockerfile: Server/services/auth/Dockerfile
         container_name: auth_service
         ports:
             - "7001:3000"
@@ -36,8 +36,8 @@ services:
 
     chat:
         build:
-            context: .
-            dockerfile: services/chat/Dockerfile
+            context: ..
+            dockerfile: Server/services/chat/Dockerfile
         container_name: chat_service
         ports:
             - "7002:3000"
@@ -52,8 +52,8 @@ services:
 
     game:
         build:
-            context: .
-            dockerfile: services/game/Dockerfile
+            context: ..
+            dockerfile: Server/services/game/Dockerfile
         container_name: game_service
         ports:
             - "7003:3000"
@@ -68,8 +68,8 @@ services:
 
     lobby:
         build:
-            context: .
-            dockerfile: services/lobby/Dockerfile
+            context: ..
+            dockerfile: Server/services/lobby/Dockerfile
         container_name: lobby_service
         ports:
             - "7004:3000"
@@ -87,8 +87,8 @@ services:
 
     waitingroom:
         build:
-            context: .
-            dockerfile: services/waitingRoom/Dockerfile
+            context: ..
+            dockerfile: Server/services/waitingRoom/Dockerfile
         container_name: waitingroom_service
         ports:
             - "7005:3000"
@@ -106,11 +106,27 @@ services:
 
     store:
         build:
-            context: .
-            dockerfile: services/store/Dockerfile
+            context: ..
+            dockerfile: Server/services/store/Dockerfile
         container_name: store_service
         ports:
             - "7006:3000"
+        depends_on:
+            - db
+        environment:
+            DATABASE_HOST: db
+            DATABASE_USER: postgres
+            DATABASE_PASSWORD: postgres
+            DATABASE_NAME: kingsmaker
+            DATABASE_PORT: 5432
+
+    sessionmanager:
+        build:
+            context: ..
+            dockerfile: Server/services/sessionManager/Dockerfile
+        container_name: sessionmanager_service
+        ports:
+            - "7007:3000"
         depends_on:
             - db
         environment:

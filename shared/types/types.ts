@@ -26,17 +26,32 @@ export function ok<T>(data: T, message?: string): SuccessResponse<T> {
   };
 }
 
+
+
 export type LoginBody = {
     username: string;
     password: string;
 }
 
 export type AuthBody = {
-  token: string;
+    token: string;
+}
+
+export type GuestBody = {
+
+}
+
+export type SessionManagerResponse = {
+    sessionId: string;
+    userId: number;
+    userType: 'registered' | 'guest' | 'admin';
+    username: string;
+    connectedAt: string;
+    lastSeen: string;
 }
 
 export type LoginResponse = {
-  sessionToken: string;
+  sessionId: string;
   userType: 'registered' | 'guest' | 'admin';
   username: string;
   nameAlias: string;
@@ -66,7 +81,7 @@ export type LogoutResponse = {
 
 // Lobby and Room related types
 export interface SessionData {
-    sessionToken: string;
+    sessionId: string;
     userId: string;
     userType: 'registered' | 'guest';
     username: string;
@@ -113,7 +128,7 @@ export interface PlayerLocation {
 }
 
 // Lobby WebSocket Message types
-export type LobbyClientMessage = 
+export type LobbyClientMessage =
     | { type: "GET_ROOM_LIST"; data: {} }
     | { type: "CREATE_ROOM"; data: { name: string; maxPlayers: 2 | 3 | 4 } }
     | { type: "JOIN_ROOM"; data: { roomId: string } }

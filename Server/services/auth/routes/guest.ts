@@ -1,14 +1,18 @@
-import { errorRes, ok, type ApiResponse, type LoginResponse, type SessionData } from "@shared/types/types";
-import { prisma } from "../lib/prisma";
+import type { LoginResponse, ApiResponse } from "@kingsmaker/shared/types/types";
+import { errorRes, ok } from "@kingsmaker/shared/types/types";
 import { getNewNameAlias } from "logic/nameAlias";
-import { SessionManager } from "../lib/session";
+import { prisma } from "@shared/prisma/prisma";
+import { generateUniqueSessionId } from "logic/assignUniqueSessionId";
+import { addConnectionToSessionManager } from "../lib/sessionServiceClient";
 
 export async function handleGuest(): Promise<ApiResponse<LoginResponse>> {
     const nameAlias = await getNewNameAlias();
     if (!nameAlias) {
         return errorRes("Failed to generate name alias");
     }
-    
+
+    const sessionId = await generateUniqueSessionId();
+
     const guestUser = await prisma.user.create({
         data: {
             username: `guest_${crypto.randomUUID().slice(0, 8)}`,
@@ -16,37 +20,21 @@ export async function handleGuest(): Promise<ApiResponse<LoginResponse>> {
             email: `${crypto.randomUUID()}@guest.local`,
             password: "",
             isConfirmed: false,
-            type: "guest"
+            type: "guest",
+            sessionId,
+            sessionExpireAt: new Date(Date.now() + 1000 * 60 * 60 * 24)
         }
     });
 
-    const now = new Date();
-    const sessionToken = crypto.randomUUID();
-    
-    // Store session in database (existing behavior)
-    await prisma.session.create({
-        data: {
-            id: sessionToken,
-            userID: guestUser.id,
-            expiresAt: new Date(now.getTime() + 1000 * 60 * 60 * 24), // 1 day
-            createdAt: now
-        }
-    });
-
-    // Store session in Redis for fast access by other services
-    const sessionData: SessionData = {
-        sessionToken: sessionToken,
-        userId: guestUser.id.toString(),
-        username: guestUser.username,
-        userType: "guest",
-        connectedAt: now.toISOString(),
-        lastSeen: now.toISOString()
-    };
-
-    await SessionManager.createSession(sessionToken, sessionData);
+    // Add connection to sessionManager
+    const sessionManagerResponse = await addConnectionToSessionManager(guestUser);
+    if (!sessionManagerResponse) {
+        // SessionManager connection failed, but don't fail guest login entirely
+        console.warn("Failed to add guest connection to SessionManager, proceeding with guest login");
+    }
 
     const data: LoginResponse = {
-        sessionToken,
+        sessionId: sessionId,
         userType: "guest",
         username: guestUser.username,
         nameAlias: guestUser.nameAlias,

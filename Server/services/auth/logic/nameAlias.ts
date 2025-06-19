@@ -1,5 +1,5 @@
-import { prisma } from "../lib/prisma";
 import { adjectives, animals, uniqueNamesGenerator } from "unique-names-generator";
+import { prisma } from "@shared/prisma/prisma";
 
 export async function getNewNameAlias(): Promise<string | null> {
     for (let i = 0; i < 10; i++) {

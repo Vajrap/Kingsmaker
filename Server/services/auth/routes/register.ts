@@ -1,5 +1,5 @@
-import { errorRes, ok, type ApiResponse, type RegisterBody, type RegisterResponse } from "@shared/types/types";
-import { prisma } from "../lib/prisma";
+import { type RegisterBody, type ApiResponse, type RegisterResponse, errorRes, ok } from "@kingsmaker/shared/types/types";
+import { prisma } from "@shared/prisma/prisma";
 import { getNewNameAlias } from "logic/nameAlias";
 
 export async function handleRegister({ body }: { body: RegisterBody }): Promise<ApiResponse<RegisterResponse>> {
@@ -30,7 +30,9 @@ export async function handleRegister({ body }: { body: RegisterBody }): Promise<
             nameAlias: nameAlias,
             password: hashedPassword,
             isConfirmed: false,
-            type: "registered"
+            type: "registered",
+            sessionId: "",
+            sessionExpireAt: new Date()
         }
     })
 

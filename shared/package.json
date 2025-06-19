@@ -5,13 +5,18 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "bun build ./index.ts --outdir ./dist --target node",
-    "prepare": "bun run build"
+    "build": "tsc --build",
+    "build:bun": "bun build ./index.ts --outdir ./dist --target node",
+    "prisma:generate": "prisma generate --schema=./prisma/schema.prisma",
+    "prisma:migrate": "prisma migrate dev --schema=./prisma/schema.prisma"
   },
   "dependencies": {
-    "@prisma/client": "^6.9.0"
+    "@prisma/client": "^6.9.0",
+    "ioredis": "^5.3.2",
+    "dotenv": "^16.0.0"
   },
   "devDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "prisma": "^6.9.0"
   }
 } 
