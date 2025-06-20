@@ -1,4 +1,4 @@
-import type { SessionData } from '@kingsmaker/shared/types/types';
+import type { SessionData } from '../types/types';
 export declare class SessionManager {
     private static SESSION_TTL;
     /**

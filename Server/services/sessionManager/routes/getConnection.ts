@@ -1,8 +1,8 @@
-import { type ApiResponse, errorRes, ok } from "@shared/types/types";
-import { type SessionManagerResponse } from "@shared/types/types";
-import { sessionManager } from "entity/sessionManager";
+import { type ApiResponse, errorRes, ok } from "@kingsmaker/shared/types/types";
+import { type SessionManagerUserLoginResponse } from "@kingsmaker/shared/types/types";
+import { sessionManager } from "../entity/sessionManager";
 
-export async function handleGetConnection({ body }: { body: { userId: number } }): Promise<ApiResponse<SessionManagerResponse | null>> {
+export async function handleGetConnection({ body }: { body: { userId: number } }): Promise<ApiResponse<SessionManagerUserLoginResponse | null>> {
     try {
         const client = sessionManager.getClient(body.userId);
         
@@ -10,13 +10,14 @@ export async function handleGetConnection({ body }: { body: { userId: number } }
             return ok(null);
         }
 
-        const data: SessionManagerResponse = {
+        const data: SessionManagerUserLoginResponse = {
             sessionId: client.sessionId,
             userId: body.userId,
             userType: client.userType,
             username: client.username,
             connectedAt: client.connectedAt.toISOString(),
-            lastSeen: client.lastSeen.toISOString()
+            lastSeen: client.lastSeen.toISOString(),
+            presenceStatus: client.presenceStatus
         };
 
         return ok(data);

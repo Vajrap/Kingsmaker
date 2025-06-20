@@ -1,6 +1,36 @@
-import { type User } from "@shared/prisma/generated";
+import { type User } from "@kingsmaker/shared/prisma/generated";
 
-type ClientPresenceStatus = 'IN_LOBBY' | 'IN_WAITING_ROOM' | 'IN_GAME' | 'OFFLINE';
+type ClientPresenceStatus = 'INITIAL' | 'IN_LOBBY' | 'IN_WAITING_ROOM' | 'IN_GAME' | 'OFFLINE';
+/*
+Behavior
+When a client logged in
+1. the Client send data
+    const clientData = {
+        userId: number,
+        sessionId: string,
+        presenceStatus: string,
+    };
+2. Auth take the data, validate login, check from db for user where user.userId = clientData.userId and check if user.sessionExpired > Date.now() ?
+    if true -> meaning it needed new sessionId; create new sessionId -> replace old sessionId with new sessionId
+    if false -> keep using the same sessionId
+    Auth send the clientData to SessionManager - await for the response
+3. SessionManager 'check' if the client is already connected or presenceStatus === 'OFFLINE'
+    if true -> add new client to connectedClientsByUserId map (or replace) with presenceStatus === 'INITIAL'
+    if false -> meaning, that the user is somewhere in the IN_WAITING_ROOM or IN_GAME, so we need to push them into 'THAT ROOM'
+    Session manager build response with new user data
+    const user = {
+        // only care for the presence
+        presenceStatus: clientData.presenceStatus,
+    };
+    send back to auth -> client
+4. client check the returning 'presenceStatus' -> then move to the respective page;
+    - INITIAL -> lobby
+    - IN_LOBBY -> lobby
+    - IN_GAME -> game
+    - IN_WAITING_ROOM -> waitingRoom
+    - OFFLIN -> impossible
+
+*/
 
 type ConnectedClient = {
     sessionId: string;
@@ -20,7 +50,7 @@ class SessionManager {
             sessionId: user.sessionId,
             userType: user.type,
             username: user.username,
-            presenceStatus: 'OFFLINE',
+            presenceStatus: 'INITIAL',
             lastSeen: now,
             connectedAt: now,
         });

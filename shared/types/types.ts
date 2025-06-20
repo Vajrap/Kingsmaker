@@ -41,13 +41,14 @@ export type GuestBody = {
 
 }
 
-export type SessionManagerResponse = {
+export type SessionManagerUserLoginResponse = {
     sessionId: string;
     userId: number;
     userType: 'registered' | 'guest' | 'admin';
     username: string;
     connectedAt: string;
     lastSeen: string;
+    presenceStatus: 'INITIAL' | 'IN_LOBBY' | 'IN_WAITING_ROOM' | 'IN_GAME' | 'OFFLINE';
 }
 
 export type LoginResponse = {
@@ -55,6 +56,7 @@ export type LoginResponse = {
   userType: 'registered' | 'guest' | 'admin';
   username: string;
   nameAlias: string;
+  presenceStatus: 'INITIAL' | 'IN_LOBBY' | 'IN_WAITING_ROOM' | 'IN_GAME' | 'OFFLINE';
 };
 
 export type RegisterBody = {

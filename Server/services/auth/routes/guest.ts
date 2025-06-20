@@ -1,44 +1,49 @@
-import type { LoginResponse, ApiResponse } from "@kingsmaker/shared/types/types";
-import { errorRes, ok } from "@kingsmaker/shared/types/types";
-import { getNewNameAlias } from "logic/nameAlias";
-import { prisma } from "@shared/prisma/prisma";
-import { generateUniqueSessionId } from "logic/assignUniqueSessionId";
+import { type LoginResponse, type ApiResponse, errorRes, ok } from "../shared/types/types";
+import { prisma } from "../shared/prisma/prisma";
+import { generateUniqueNameAlias } from "../logic/nameAlias";
+import { assignUniqueSessionId, generateUniqueSessionId } from "../logic/assignUniqueSessionId";
 import { addConnectionToSessionManager } from "../lib/sessionServiceClient";
 
-export async function handleGuest(): Promise<ApiResponse<LoginResponse>> {
-    const nameAlias = await getNewNameAlias();
-    if (!nameAlias) {
-        return errorRes("Failed to generate name alias");
+export async function handleGuestLogin(): Promise<ApiResponse<LoginResponse>> {
+    try {
+        const nameAlias = await generateUniqueNameAlias();
+
+        const sessionId = await generateUniqueSessionId();
+        
+        const user = await createGuestUser(nameAlias, sessionId);
+        
+        if (!user) {
+            return errorRes("Failed to create guest user");
+        }
+
+        const sessionManagerResponse = await addConnectionToSessionManager(user);
+        
+        const data: LoginResponse = {
+            nameAlias: user.nameAlias,
+            username: user.username,
+            userType: "guest",
+            sessionId: user.sessionId!,
+            presenceStatus: sessionManagerResponse?.presenceStatus || "INITIAL"
+        };
+
+        return ok<LoginResponse>(data);
+    } catch (error) {
+        console.error('Guest login error:', error);
+        return errorRes("Failed to process guest login");
     }
+}
 
-    const sessionId = await generateUniqueSessionId();
-
-    const guestUser = await prisma.user.create({
+async function createGuestUser(nameAlias: string, sessionId: string) {
+    return prisma.user.create({
         data: {
-            username: `guest_${crypto.randomUUID().slice(0, 8)}`,
-            nameAlias: nameAlias,
-            email: `${crypto.randomUUID()}@guest.local`,
-            password: "",
-            isConfirmed: false,
+            username: `guest_${Date.now()}`,
             type: "guest",
-            sessionId,
-            sessionExpireAt: new Date(Date.now() + 1000 * 60 * 60 * 24)
+            email: `guest_${Date.now()}@temp.com`,
+            password: "", // Empty password for guest users
+            nameAlias: nameAlias,
+            isConfirmed: true, // Guests are automatically confirmed
+            sessionId: sessionId,
+            sessionExpireAt: new Date()
         }
     });
-
-    // Add connection to sessionManager
-    const sessionManagerResponse = await addConnectionToSessionManager(guestUser);
-    if (!sessionManagerResponse) {
-        // SessionManager connection failed, but don't fail guest login entirely
-        console.warn("Failed to add guest connection to SessionManager, proceeding with guest login");
-    }
-
-    const data: LoginResponse = {
-        sessionId: sessionId,
-        userType: "guest",
-        username: guestUser.username,
-        nameAlias: guestUser.nameAlias,
-    };
-
-    return ok<LoginResponse>(data);
 }

@@ -1,57 +1,85 @@
 # AI CONTEXT: KingsMaker Service Separation Architecture
 
-> **AI Data Assistance**: This document provides service separation context for code assistance. Not intended for human documentation.
+> **AI Data Assistance**: This document provides service separation context for code assistance. **UPDATED** to reflect SessionManager service and authority-based validation.
 
 ## Service Matrix
 ```
-auth-service (Bun:7001) → Login, register, guest, session management
-lobby-service (Bun:7004) → WebSocket, room discovery, player tracking
-waiting-room (Go:7005) → Pre-game setup, player readiness 
+auth-service (Bun:7001) → Identity validation, credential management
+sessionManager-service (Bun:7007) → Presence tracking, connection management
+lobby-service (Bun:7004) → Room discovery, WebSocket coordination
+waiting-room (Go:7005) → Pre-game rooms, player readiness
 game-service (Go:7003) → Game instances, turn logic
-redis (Redis:7379) → Central state, pub/sub coordination
+redis (Redis:7379) → State storage, pub/sub coordination
 postgresql (DB:7432) → Persistent data storage
 ```
 
 ## Service Responsibilities
 ```
 auth-service:
-  - JWT token issuing/validation
+  - User credential validation
+  - SessionId generation/expiration
   - User registration/login/guest
-  - Session storage in Redis
-  - User data persistence
+  - Database user data persistence
+  - Initial session establishment
+
+sessionManager-service:
+  - User presence status tracking  
+  - Connection state management
+  - Presence transition validation
+  - In-memory session store (no Redis)
 
 lobby-service:
-  - Primary WebSocket connections to clients
   - Room listing and discovery
-  - Player location tracking
-  - Room join/leave coordination
+  - Room creation/join coordination  
+  - WebSocket room management
+  - Redis room state storage
 
 waiting-room:  
-  - Room-specific WebSocket connections
-  - Pre-game configuration and readiness
+  - Pre-game room validation
+  - Player readiness management
   - Game start orchestration
-  - Room state management
+  - Room membership validation
 
 game-service:
-  - Game-specific WebSocket connections  
+  - Game instance validation
   - Game logic execution
-  - Turn management
+  - Turn management  
   - Game state persistence
 ```
 
-## Redis State Ownership
+## Authority-Based State Ownership
 ```typescript
-// Shared state via Redis
-"loggedInUsers:<sessionId>": SessionData // auth-service writes, others read
-"waitingRooms:<roomId>": WaitingRoomMetadata // lobby creates, waiting-room manages
-"waitingRoomPlayers:<roomId>": PlayerSlot[] // waiting-room manages
-"playerLocation:<userId>": PlayerLocation // lobby-service manages
-"games:<gameId>": GameState // game-service manages
+// Each service owns its authority domain
+Auth Service (DB):
+  - User credentials, profiles
+  - SessionId generation/expiration
+
+SessionManager Service (In-Memory):
+  - User presence status
+  - Connection tracking
+
+Lobby Service (Redis):
+  - "waitingRooms:<roomId>": WaitingRoomMetadata
+  - Room discovery/listing state
+
+WaitingRoom Service (Redis):
+  - "waitingRoomPlayers:<roomId>": PlayerSlot[]
+  - "userRoomMapping:<userId>": { roomId }
+
+Game Service (Redis):
+  - "games:<gameId>": GameState
+  - "userGameMapping:<userId>": { gameId }
 ```
 
 ## Inter-Service Communication
 ```typescript
-// Pub/Sub Events
+// HTTP Service-to-Service Calls
+Auth ↔ SessionManager: addConnection, resumeConnection, updatePresence
+Lobby → SessionManager: validateSession, updatePresence
+WaitingRoom → SessionManager: validateSession, updatePresence  
+Game → SessionManager: validateSession, updatePresence
+
+// Pub/Sub Events (Redis)
 room_created: lobby-service → waiting-room
 room_closed: waiting-room → lobby-service  
 player_joined: lobby-service → waiting-room
@@ -62,16 +90,17 @@ game_ended: game-service → lobby-service
 
 ## Client Connection Strategy
 ```
-Sequential Connection Model:
-1. Client → auth-service (HTTP) → Get session
-2. Client → lobby-service (WebSocket) → Primary connection
-3. Client → waiting-room (WebSocket) → When joining room
-4. Client → game-service (WebSocket) → When game starts
+Presence-Based Routing Model:
+1. Client → auth-service (HTTP) → Get session + presenceStatus
+2. Client routing based on presenceStatus:
+   - INITIAL/IN_LOBBY → lobby-service (WebSocket)
+   - IN_WAITING_ROOM → waiting-room validation → WebSocket
+   - IN_GAME → game-service validation → WebSocket
 
-Connection Rules:
-- Only one active WebSocket per service per client
-- Previous WebSocket closes when connecting to next service
-- Redis maintains consistent state across transitions
+Validation Rules:
+- Services validate their own authority before connection
+- Invalid presence claims redirect to lobby
+- SessionManager tracks presence across all transitions
 ```
 
 ## Technology Choices
@@ -97,14 +126,16 @@ Redis:
 
 ## Service Dependencies
 ```
-auth-service → redis, postgresql
-lobby-service → redis (session validation, state management)
-waiting-room → redis (room state, pub/sub)
-game-service → redis (game state, pub/sub)
+auth-service → postgresql, sessionManager-service
+sessionManager-service → postgresql (user validation)
+lobby-service → redis, sessionManager-service
+waiting-room → redis, sessionManager-service
+game-service → redis, sessionManager-service
 
-Data Flow:
-auth → redis → {lobby, waiting-room, game}
-lobby ↔ waiting-room ↔ game-service (via Redis pub/sub)
+Authority Flow:
+auth → sessionManager (presence tracking)
+{lobby, waiting-room, game} → sessionManager (presence validation)
+{lobby, waiting-room, game} ↔ redis (state storage/pub-sub)
 ```
 
 ## Deployment Architecture

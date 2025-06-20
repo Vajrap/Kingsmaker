@@ -1,10 +1,10 @@
-import type { User } from "@shared/prisma/generated";
-import { prisma } from "@shared/prisma/prisma";
-import { type ApiResponse, errorRes, ok } from "@shared/types/types";
-import { sessionManager } from "entity/sessionManager";
-import { type SessionManagerResponse } from "@shared/types/types";
+import type { User } from "@kingsmaker/shared/prisma/generated";
+import { prisma } from "@kingsmaker/shared/prisma/prisma";
+import { type ApiResponse, errorRes, ok } from "@kingsmaker/shared/types/types";
+import { sessionManager } from "../entity/sessionManager";
+import { type SessionManagerUserLoginResponse } from "@kingsmaker/shared/types/types";
 
-export async function handleAddConnection({ body }: { body: User }): Promise<ApiResponse<SessionManagerResponse>> {
+export async function handleAddConnection({ body }: { body: User }): Promise<ApiResponse<SessionManagerUserLoginResponse>> {
     const dbUser = await prisma.user.findUnique({ where: { id: body.id } });
     if (!dbUser) {
         return errorRes("User not found")
@@ -17,13 +17,14 @@ export async function handleAddConnection({ body }: { body: User }): Promise<Api
 
     sessionManager.connectClient(body);
 
-    const data: SessionManagerResponse = {
+    const data: SessionManagerUserLoginResponse = {
         sessionId: body.sessionId,
         userId: body.id,
         userType: body.type,
         username: body.username,
         connectedAt: new Date().toISOString(),
-        lastSeen: new Date().toISOString()
+        lastSeen: new Date().toISOString(),
+        presenceStatus: 'INITIAL'
     };
 
     return ok(data);

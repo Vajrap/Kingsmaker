@@ -2,11 +2,11 @@ import { Elysia } from "elysia";
 import cors from "@elysiajs/cors";
 import "dotenv/config";
 import { jsonPost } from "@kingsmaker/shared/utils/jsonPost";
-import { handleAddConnection } from "routes/addConnection";
-import { handleRemoveConnection } from "routes/removeConnection";
-import { handleGetConnection } from "routes/getConnection";
-import { handleUpdatePresence } from "routes/updatePresence";
-import type { User } from "@shared/prisma/generated";
+import { handleAddConnection } from "./routes/addConnection";
+import { handleRemoveConnection } from "./routes/removeConnection";
+import { handleGetConnection } from "./routes/getConnection";
+import { handleUpdatePresence } from "./routes/updatePresence";
+import type { User } from "@kingsmaker/shared/prisma/generated";
 
 
 const PORT = parseInt(process.env.PORT || "3000");

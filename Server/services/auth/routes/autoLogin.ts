@@ -1,45 +1,46 @@
-import { type AuthBody, type ApiResponse, type LoginResponse, errorRes, ok } from "@kingsmaker/shared/types/types";
-import { prisma } from "@shared/prisma/prisma";
-import { checkConnectionInSessionManager, addConnectionToSessionManager } from "../lib/sessionServiceClient";
+import type { User } from "../shared/prisma/generated";
+import { type AuthBody, type ApiResponse, type LoginResponse, errorRes, ok } from "../shared/types/types";
+import { prisma } from "../shared/prisma/prisma";
+import { resumeConnectionInSessionManager } from "../lib/sessionServiceClient";
 
 export async function handleAutoLogin({ body }: { body: AuthBody }): Promise<ApiResponse<LoginResponse>> {
     try {
-        // Find user by session token (sessionId)
-        const user = await prisma.user.findFirst({
-            where: {
-                sessionId: body.token
-            }
-        });
-
+        // Find user by session token
+        const user = await findUserBySessionToken(body.token);
         if (!user) {
-            return errorRes("Invalid session token");
+            return errorRes("Invalid or expired session");
         }
 
-        // Check if session is expired
-        if (!user.sessionExpireAt || new Date() > user.sessionExpireAt) {
+        // Check if session is still valid
+        if (user.sessionExpireAt && user.sessionExpireAt < new Date()) {
             return errorRes("Session has expired");
         }
 
-        // Check if user is already connected in sessionManager
-        const existingConnection = await checkConnectionInSessionManager(user.id);
-        if (!existingConnection) {
-            // User not connected, add them to sessionManager
-            const sessionManagerResponse = await addConnectionToSessionManager(user);
-            if (!sessionManagerResponse) {
-                console.warn("Failed to add connection to SessionManager during autoLogin");
-            }
+        // Resume connection in SessionManager
+        const sessionManagerResponse = await resumeConnectionInSessionManager(user);
+        if (!sessionManagerResponse) {
+            console.warn("Failed to resume connection in SessionManager, proceeding with auto-login");
         }
 
         const data: LoginResponse = {
-            sessionId: user.sessionId,
-            userType: user.type,
-            username: user.username,
             nameAlias: user.nameAlias,
+            username: user.username,
+            userType: user.type === "registered" ? "registered" : user.type === "guest" ? "guest" : "admin",
+            sessionId: user.sessionId!,
+            presenceStatus: sessionManagerResponse?.presenceStatus || "INITIAL"
         };
 
-        return ok(data);
+        return ok<LoginResponse>(data);
     } catch (error) {
-        console.error("AutoLogin error:", error);
-        return errorRes("Auto login failed");
+        console.error('Auto-login error:', error);
+        return errorRes("Failed to auto-login");
     }
+}
+
+async function findUserBySessionToken(token: string): Promise<User | null> {
+    return prisma.user.findUnique({
+        where: {
+            sessionId: token
+        }
+    });
 }

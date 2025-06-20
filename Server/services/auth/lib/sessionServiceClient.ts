@@ -1,85 +1,101 @@
-import type { User } from "@shared/prisma/generated";
-import type { ApiResponse, SessionManagerResponse } from "@kingsmaker/shared/types/types";
+import type { User } from "../shared/prisma/generated";
+import type { SessionManagerUserLoginResponse } from "../shared/types/types";
 
 const SESSION_MANAGER_URL = process.env.SESSION_MANAGER_URL || "http://sessionmanager:3000";
 
-// Specific response types for sessionManager endpoints
-type RemoveConnectionResponse = { success: boolean };
-type UpdatePresenceResponse = { success: boolean };
+function isApiResponse(obj: unknown): obj is { success: boolean; data?: unknown; message?: string } {
+    return (
+        typeof obj === 'object' &&
+        obj !== null &&
+        'success' in obj &&
+        typeof (obj as any).success === 'boolean'
+    );
+}
 
-// Type-safe HTTP client helper
-async function makeSessionServiceRequest<T>(
-    endpoint: string, 
-    body: unknown
-): Promise<T | null> {
+export async function addConnectionToSessionManager(user: User): Promise<SessionManagerUserLoginResponse | null> {
     try {
-        const response = await fetch(`${SESSION_MANAGER_URL}${endpoint}`, {
+        const response = await fetch(`${SESSION_MANAGER_URL}/addConnection`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(body)
+            body: JSON.stringify(user),
         });
 
-        if (!response.ok) {
-            console.error(`SessionService ${endpoint} failed: ${response.status}`);
+        const json = await response.json();
+
+        if (!isApiResponse(json)) {
+            console.error(`SessionManager /addConnection returned invalid structure`, json);
             return null;
         }
 
-        // Parse JSON without explicit casting
-        const jsonData = await response.json();
-        
-        // Basic validation that it has the expected ApiResponse structure
-        if (typeof jsonData === 'object' && jsonData !== null && 'success' in jsonData) {
-            return jsonData as T;
+        if (!response.ok || !json.success) {
+            console.error(`SessionManager addConnection failed: ${json.message || response.status}`);
+            return null;
         }
-        
-        console.error(`SessionService ${endpoint} returned invalid response structure`);
-        return null;
+
+        return json.data as SessionManagerUserLoginResponse;
     } catch (error) {
-        console.error(`Failed to connect to SessionService ${endpoint}:`, error);
+        console.error(`Failed to call SessionManager /addConnection:`, error);
         return null;
     }
 }
 
-export async function addConnectionToSessionManager(user: User): Promise<SessionManagerResponse | null> {
-    const result = await makeSessionServiceRequest<ApiResponse<SessionManagerResponse>>(
-        '/addConnection', 
-        user
-    );
-    
-    if (result?.success) {
-        return result.data;
-    } else if (result) {
-        console.error(`SessionManager addConnection error: ${result.message}`);
+export async function resumeConnectionInSessionManager(user: User): Promise<SessionManagerUserLoginResponse | null> {
+    try {
+        const response = await fetch(`${SESSION_MANAGER_URL}/resumeConnection`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(user),
+        });
+
+        const json = await response.json();
+
+        if (!isApiResponse(json)) {
+            console.error(`SessionManager /resumeConnection returned invalid structure`, json);
+            return null;
+        }
+
+        if (!response.ok || !json.success) {
+            console.error(`SessionManager resumeConnection failed: ${json.message || response.status}`);
+            return null;
+        }
+
+        return json.data as SessionManagerUserLoginResponse;
+    } catch (error) {
+        console.error(`Failed to call SessionManager /resumeConnection:`, error);
+        return null;
     }
-    
-    return null;
 }
 
 export async function removeConnectionFromSessionManager(userId: number): Promise<boolean> {
-    const result = await makeSessionServiceRequest<ApiResponse<RemoveConnectionResponse>>(
-        '/removeConnection', 
-        { userId }
-    );
-    
-    return result?.success === true;
-}
+    try {
+        const response = await fetch(`${SESSION_MANAGER_URL}/removeConnection`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            // Do we need to do Json string here
+            body: JSON.stringify({ userId })
+        });
 
-export async function checkConnectionInSessionManager(userId: number): Promise<SessionManagerResponse | null> {
-    const result = await makeSessionServiceRequest<ApiResponse<SessionManagerResponse | null>>(
-        '/getConnection', 
-        { userId }
-    );
-    
-    return result?.success ? result.data : null;
-}
+        const json = await response.json();
 
-export async function updatePresenceInSessionManager(userId: number, presence: 'IN_LOBBY' | 'IN_WAITING_ROOM' | 'IN_GAME' | 'OFFLINE'): Promise<boolean> {
-    const result = await makeSessionServiceRequest<ApiResponse<UpdatePresenceResponse>>(
-        '/updatePresence', 
-        { userId, presence }
-    );
-    
-    return result?.success === true && result.data.success === true;
-} 
+        if (!isApiResponse(json)) {
+            console.error(`SessionManager /removeConnection returned invalid structure`, json);
+            return false;
+        }
+
+        if (!response.ok || !json.success) {
+            console.warn(`SessionManager /removeConnection failed: ${json.message || response.status}`)
+            return false;
+        }
+
+        return true;
+    } catch (error) {
+        console.error(`Failed to call SessionManager /removeConnection`, error);
+        return false
+    }
+}

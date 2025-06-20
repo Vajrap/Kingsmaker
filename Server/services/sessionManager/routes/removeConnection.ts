@@ -1,5 +1,5 @@
-import { type ApiResponse, errorRes, ok } from "@shared/types/types";
-import { sessionManager } from "entity/sessionManager";
+import { type ApiResponse, errorRes, ok } from "@kingsmaker/shared/types/types";
+import { sessionManager } from "../entity/sessionManager";
 
 export async function handleRemoveConnection({ body }: { body: { userId: number } }): Promise<ApiResponse<{ success: boolean }>> {
     try {

@@ -16,7 +16,7 @@ COPY Server/services/sessionManager ./services/sessionManager
 # Set up environment for Prisma
 RUN echo "DATABASE_URL=postgresql://postgres:postgres@db:5432/kingsmaker" > .env
 
-# Install all workspace dependencies
+# Install root dependencies first
 RUN bun install
 
 # Generate Prisma client first
@@ -27,6 +27,9 @@ RUN cd shared && bunx prisma generate --schema=./prisma/schema.prisma
 
 # Build shared dependencies first
 RUN cd shared && bun run build
+
+# Install sessionManager service dependencies (this will properly link the shared library)
+RUN cd services/sessionManager && bun install
 
 # Build the sessionManager service
 RUN cd services/sessionManager && bun build ./index.ts --outdir ./dist --target node

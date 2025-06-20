@@ -1,17 +1,19 @@
-import { type User } from "@shared/prisma/generated";
-import { type LoginBody, type ApiResponse, type LoginResponse, errorRes, ok } from "@kingsmaker/shared/types/types";
-import { prisma } from "@shared/prisma/prisma";
-import { assignUniqueSessionId } from "logic/assignUniqueSessionId";
-import { addConnectionToSessionManager, checkConnectionInSessionManager } from "../lib/sessionServiceClient";
+import type { User } from "../shared/prisma/generated";
+import { type LoginBody, type ApiResponse, type LoginResponse, errorRes, ok } from "../shared/types/types";
+import { prisma } from "../shared/prisma/prisma";
+import { assignUniqueSessionId } from "../logic/assignUniqueSessionId";
+import { addConnectionToSessionManager } from "../lib/sessionServiceClient";
 
 export async function handleLogin({ body }: {body: LoginBody}): Promise<ApiResponse<LoginResponse>> {
     const user = await findUser(body.username);
     if (!user) {
+        console.warn(`Login failed: User '${body.username}' not found`);
         return errorRes("User not found");
     };
 
     const validate = await validatePassword(user, body.password);
     if (!validate) {
+        console.warn(`Login failed: Invalid password for user '${body.username}'`);
         return errorRes("Invalid password");
     };
 
@@ -24,31 +26,19 @@ export async function handleLogin({ body }: {body: LoginBody}): Promise<ApiRespo
         user.sessionExpireAt = result.expiresAt;
     }
 
-    // Check if user is already connected (one user per machine enforcement)
-    const existingConnection = await checkConnectionInSessionManager(user.id);
-    if (existingConnection) {
-        // User already logged in, return existing session info
-        const data: LoginResponse = {
-            nameAlias: user.nameAlias,
-            username: user.username,
-            userType: "registered",
-            sessionId: user.sessionId
-        };
-        return ok<LoginResponse>(data);
-    }
-
-    // Add connection to sessionManager
     const sessionManagerResponse = await addConnectionToSessionManager(user);
     if (!sessionManagerResponse) {
-        // SessionManager connection failed, but don't fail login entirely
         console.warn("Failed to add connection to SessionManager, proceeding with login");
+    } else {
+        user.sessionId = sessionManagerResponse.sessionId;
     }
 
     const data: LoginResponse = {
         nameAlias: user.nameAlias,
         username: user.username,
         userType: "registered",
-        sessionId: user.sessionId
+        sessionId: user.sessionId,
+        presenceStatus: sessionManagerResponse?.presenceStatus || "INITIAL"
     };
 
     return ok<LoginResponse>(data)

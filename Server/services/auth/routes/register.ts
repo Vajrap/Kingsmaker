@@ -1,46 +1,61 @@
-import { type RegisterBody, type ApiResponse, type RegisterResponse, errorRes, ok } from "@kingsmaker/shared/types/types";
-import { prisma } from "@shared/prisma/prisma";
-import { getNewNameAlias } from "logic/nameAlias";
+import { type RegisterBody, type RegisterResponse, type ApiResponse, errorRes, ok } from "../shared/types/types";
+import { prisma } from "../shared/prisma/prisma";
+import { generateUniqueNameAlias } from "../logic/nameAlias";
 
 export async function handleRegister({ body }: { body: RegisterBody }): Promise<ApiResponse<RegisterResponse>> {
-    const userNameAvailable = await isUserNameAvailable(body.username)
-    if (!userNameAvailable) {
-        return errorRes("User name is already used.");
-    }
+    try {
+        // Check if username already exists
+        const existingUser = await prisma.user.findUnique({
+            where: { username: body.username }
+        });
 
-    const emailAvailable = await isEmailAvailable(body.email)
-    if (!emailAvailable) {
-        return errorRes("Email is already taken");
-    }
-
-    if (!validatePassword(body.password)) {
-        return errorRes("Password is invalid");
-    }
-
-    const hashedPassword = await Bun.password.hash(body.password);
-    const nameAlias = await getNewNameAlias();
-    if (!nameAlias) {
-        return errorRes("Failed to generate name alias");
-    }
-
-    let createdUser = await prisma.user.create({
-        data: {
-            username: body.username,
-            email: body.email,
-            nameAlias: nameAlias,
-            password: hashedPassword,
-            isConfirmed: false,
-            type: "registered",
-            sessionId: "",
-            sessionExpireAt: new Date()
+        if (existingUser) {
+            return errorRes("Username already exists");
         }
-    })
 
-    sendConfirmationEmail(createdUser);
+        // Check if email already exists
+        const existingEmail = await prisma.user.findUnique({
+            where: { email: body.email }
+        });
 
-    return ok<RegisterResponse>(createdUser)
+        if (existingEmail) {
+            return errorRes("Email already exists");
+        }
+
+        // Generate unique name alias
+        const nameAlias = await generateUniqueNameAlias();
+
+        // Hash password
+        const hashedPassword = await Bun.password.hash(body.password);
+
+        // Create user
+        const user = await prisma.user.create({
+            data: {
+                username: body.username,
+                email: body.email,
+                password: hashedPassword,
+                nameAlias: nameAlias,
+                type: "registered",
+                isConfirmed: false,
+                sessionId: "",
+                sessionExpireAt: new Date()
+            }
+        });
+
+        const data: RegisterResponse = {
+            id: user.id,
+            nameAlias: user.nameAlias,
+            username: user.username,
+            email: user.email,
+            type: "registered"
+        };
+
+        return ok<RegisterResponse>(data);
+    } catch (error) {
+        console.error('Registration error:', error);
+        return errorRes("Failed to register user");
+    }
 }
-
 
 function sendConfirmationEmail(user: any) {
     // Implementation of sending confirmation email

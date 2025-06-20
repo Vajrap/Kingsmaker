@@ -1,21 +1,31 @@
-import { prisma } from "@shared/prisma/prisma";
+import { prisma } from "../shared/prisma/prisma";
 
 export async function generateUniqueSessionId(): Promise<string> {
-    const maxRetries = 5;
-    for (let i = 0; i < maxRetries; i++) {
-        const sessionId = crypto.randomUUID();
-        const exists = await prisma.user.findUnique({ where: { sessionId } });
-        if (!exists) return sessionId;
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    const charactersLength = characters.length;
+    for (let i = 0; i < 32; i++) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
-    throw new Error("Failed to generate unique session ID");
+    return result;
 }
 
-export async function assignUniqueSessionId(userId: number): Promise<{ sessionId: string, expiresAt: Date } | null> {
-    const sessionId = await generateUniqueSessionId();
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
-    await prisma.user.update({
-        where: { id: userId },
-        data: { sessionId, sessionExpireAt: expiresAt }
-    });
-    return { sessionId, expiresAt };
+export async function assignUniqueSessionId(userId: number): Promise<{sessionId: string, expiresAt: Date} | null> {
+    try {
+        const sessionId = await generateUniqueSessionId();
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
+
+        await prisma.user.update({
+            where: { id: userId },
+            data: {
+                sessionId,
+                sessionExpireAt: expiresAt
+            }
+        });
+
+        return { sessionId, expiresAt };
+    } catch (error) {
+        console.error('Error assigning unique session ID:', error);
+        return null;
+    }
 }

@@ -1,6 +1,6 @@
 # AI CONTEXT: KingsMaker Service Architecture Patterns
 
-> **AI Data Assistance**: This document provides service implementation patterns for code assistance. Not intended for human documentation.
+> **AI Data Assistance**: This document provides service implementation patterns for code assistance. **UPDATED** to reflect SessionManager service and authority-based validation.
 
 ## Service Directory Structure
 ```
@@ -22,6 +22,9 @@ services/[service-name]/
   "dependencies": {
     "@kingsmaker/shared": "file:../../shared",
     "@prisma/client": "^6.9.0",
+    "@elysiajs/cors": "^1.3.3",
+    "elysia": "^1.3.4",
+    "ioredis": "^5.4.1",
     "bun-types": "latest",
     "dotenv": "^16.5.0"
   },
@@ -122,13 +125,15 @@ export default db;
 ```typescript
 // Import from shared library
 import type { 
-    SessionData, 
+    SessionManagerUserLoginResponse,
     WaitingRoomMetadata,
-    LobbyClientMessage 
+    LobbyClientMessage,
+    ApiResponse,
+    ValidationResult
 } from '@kingsmaker/shared/types/types';
 
 // Use in service logic
-const sessionData: SessionData = { ... };
+const sessionData: SessionManagerUserLoginResponse = { ... };
 ```
 
 ## Docker Compose Integration
@@ -192,8 +197,16 @@ JWT_SECRET=your-secret (auth service only)
 
 ## Service Communication Patterns
 ```typescript
-// HTTP REST (auth-service only)
-app.post('/auth/login', handler)
+// HTTP REST (auth-service, sessionManager-service)
+app.post('/login', handler)
+app.post('/addConnection', handler)
+
+// Service-to-Service HTTP calls
+const response = await fetch(`${SESSION_MANAGER_URL}/addConnection`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(user)
+});
 
 // WebSocket (lobby, waiting-room, game)
 const wss = new WebSocketServer({ port: PORT });
@@ -202,6 +215,10 @@ const wss = new WebSocketServer({ port: PORT });
 subscriber.on('message', (channel, message) => { ... });
 await publisher.publish('event_name', JSON.stringify(data));
 
-// Redis State (all services)
-await redis.setex(`key:${id}`, TTL, JSON.stringify(data));
+// Service Validation Pattern
+export async function validateServiceRequest(data: unknown): Promise<ValidationResult> {
+  // Validate input structure
+  // Validate service authority
+  // Return validation result
+}
 ``` 

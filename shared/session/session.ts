@@ -1,5 +1,5 @@
 import { redis } from '../redis/redis';
-import type { SessionData } from '@kingsmaker/shared/types/types';
+import type { SessionData } from '../types/types';
 
 export class SessionManager {
     private static SESSION_TTL = 24 * 60 * 60; // 24 hours in seconds

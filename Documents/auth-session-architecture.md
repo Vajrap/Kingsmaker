@@ -1,95 +1,101 @@
 # AI CONTEXT: KingsMaker Auth & Session Architecture
 
-> **AI Data Assistance**: This document provides authentication context for code assistance. Not intended for human documentation.
+> **AI Data Assistance**: This document provides authentication context for code assistance. **UPDATED** to reflect SessionManager service integration.
 
 ## Service Overview
 ```
-auth-service (Bun:7001) → Authentication, JWT, Session management
-Technology: Bun + Redis + PostgreSQL + JWT
+auth-service (Bun:7001) → Authentication, credential validation, sessionId management
+sessionManager-service (Bun:7007) → Presence tracking, connection management
+Technology: Bun + PostgreSQL + SessionManager integration
 ```
 
 ## User Types
 ```typescript
-RegisteredUser: email/password → JWT token → persistent data
-GuestUser: auto-generated → guest token → session-only data
+RegisteredUser: email/password → sessionId → persistent data + presence tracking
+GuestUser: auto-generated → sessionId → session-only data + presence tracking
 ```
 
-## Token Management
+## Session Management (NEW ARCHITECTURE)
 ```typescript
-// JWT Token (Registered users)
-Format: JWT (HS256)
-Storage: Redis + Client localStorage
-Lifetime: 24h sliding window
-Key: `session:<sessionId>`
+// Session Flow
+1. Auth validates credentials → DB
+2. Auth generates/reuses sessionId with expiration
+3. Auth → SessionManager: addConnection(user) or resumeConnection(user)
+4. SessionManager tracks presence in-memory
+5. Auth returns sessionId + presenceStatus to client
 
-// Guest Session  
-Format: `guest_<uuid>`
-Storage: Redis + Client localStorage
-Lifetime: Browser session
-Key: `session:<sessionId>`
+// SessionId Format
+Format: UUID v4 or custom unique string
+Storage: PostgreSQL (persistent) + SessionManager (in-memory presence)
+Lifetime: Configurable expiration (default: 24h)
 ```
 
-## Redis Session Data
+## SessionManager Integration
 ```typescript
-interface SessionData {
-  type: "registered" | "guest";
-  userId: string;
+// Auth Service → SessionManager Communication
+interface SessionManagerUserLoginResponse {
+  sessionId: string;
+  userId: number;
+  userType: 'registered' | 'guest' | 'admin';
   username: string;
-  email?: string; // registered only
-  issuedAt: string;
-  lastActivity: string;
+  connectedAt: string;
+  lastSeen: string;
+  presenceStatus: 'INITIAL' | 'IN_LOBBY' | 'IN_WAITING_ROOM' | 'IN_GAME' | 'OFFLINE';
 }
 
-// Redis Keys
-"session:<sessionId>": SessionData // TTL: 24h
-"user-sessions:<userId>": string[] // active session IDs
+// SessionManager State (In-Memory)
+Map<userId, ConnectedClient> where ConnectedClient = {
+  sessionId: string;
+  userType: 'registered' | 'guest' | 'admin';
+  username: string;
+  presenceStatus: ClientPresenceStatus;
+  lastSeen: Date;
+  connectedAt: Date;
+}
 ```
 
 ## Auth API Endpoints
 ```typescript
-POST /auth/register: { email, username, password } → { token, sessionId, user }
-POST /auth/login: { email, password } → { token, sessionId, user }  
-POST /auth/guest: { preferredUsername? } → { token, sessionId, user }
-POST /auth/refresh: Bearer token → { token, expiresAt }
-POST /auth/logout: Bearer token → { success }
-GET /auth/me: Bearer token → { user, sessionInfo }
+POST /register: { email, username, password } → { sessionId, presenceStatus, user }
+POST /login: { username, password } → { sessionId, presenceStatus, user }  
+POST /guest: { preferredUsername? } → { sessionId, presenceStatus, user }
+POST /autoLogin: { token } → { sessionId, presenceStatus, user }
+POST /logout: { sessionId } → { success }
 ```
 
 ## Security Implementation
 ```typescript
 // Password hashing (Bun built-in)
-const hash = await password.hash(plainPassword, {
+const hash = await Bun.password.hash(plainPassword, {
   algorithm: "argon2id",
   memoryCost: 19456,
   timeCost: 2,
 });
 
-// JWT config
-{
-  algorithm: 'HS256',
-  expiresIn: '24h',
-  issuer: 'kingsmaker-auth',
-  audience: 'kingsmaker-game'
-}
+// SessionId generation
+const sessionId = crypto.randomUUID();
+const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
 ```
 
 ## Session Lifecycle
 ```typescript
 // Create session
 async createSession(user: User): Promise<SessionResponse>
-  → Generate sessionId
-  → Store in Redis with TTL
-  → Track in user-sessions set
+  → Generate sessionId with expiration
+  → Store in PostgreSQL
+  → Call SessionManager.addConnection(user)
+  → Return sessionId + presenceStatus
 
 // Validate session  
 async validateSession(sessionId: string): Promise<SessionData | null>
-  → Check Redis existence
+  → Check PostgreSQL for session existence
+  → Check expiration timestamp
   → Return session data or null
 
 // Refresh session
 async refreshSession(sessionId: string): Promise<boolean>
-  → Update lastActivity
-  → Extend TTL
+  → Update lastActivity in PostgreSQL
+  → Extend expiration timestamp
 ```
 
 ## Database Schema (Prisma)
@@ -101,22 +107,29 @@ model User {
   password      String
   type          UserType  // registered | guest | admin
   nameAlias     String    @unique
+  sessionId     String?   // Current session
+  sessionExpireAt DateTime?
   isConfirmed   Boolean   @default(false)
-  Session       Session[]
-}
-
-model Session {
-  id        String   @id @default(cuid())
-  userID    Int
-  user      User     @relation(fields: [userID], references: [id])
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 ```
 
 ## Service Dependencies
 ```
-auth-service → redis (session storage)
-auth-service → postgresql (user data)
-Other services → redis (session validation)
+auth-service → postgresql (user data, sessions)
+auth-service → sessionManager-service (presence tracking)
+sessionManager-service → postgresql (user validation)
+Other services → sessionManager-service (presence validation)
+```
+
+## Login Response Format
+```typescript
+interface LoginResponse {
+  sessionId: string;
+  userType: 'registered' | 'guest' | 'admin';
+  username: string;
+  nameAlias: string;
+  presenceStatus: 'INITIAL' | 'IN_LOBBY' | 'IN_WAITING_ROOM' | 'IN_GAME' | 'OFFLINE';
+}
 ``` 

@@ -1,18 +1,25 @@
 {
-  "name": "sessionmanager-service",
-  "module": "index.ts",
-  "type": "module",
+  "name": "@kingsmaker/sessionmanager-service",
+  "version": "1.0.0",
   "private": true,
-  "devDependencies": {
-    "@types/bun": "latest"
+  "scripts": {
+    "dev": "bun run --watch index.ts",
+    "build": "bun build ./index.ts --outdir ./dist --target node",
+    "start": "bun run dist/index.js"
   },
-  "peerDependencies": {
-    "typescript": "^5"
+  "dependencies": {
+    "@kingsmaker/shared": "file:../../shared",
+    "@elysiajs/cors": "^1.3.3",
+    "@prisma/client": "^6.9.0",
+    "bun-types": "latest",
+    "dotenv": "^16.5.0",
+    "elysia": "^1.3.4"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.0.0"
   },
   "prisma": {
     "schema": "../../database/prisma/schema.prisma"
-  },
-  "dependencies": {
-    "@prisma/client": "^6.9.0"
   }
 }
