@@ -1,10 +1,39 @@
-schema=database/prisma/schema.prisma
+schema=../shared/prisma/schema.prisma
 
-.PHONY: generate build up down logs clean auth chat game lobby waitingroom store dev test-auth copy-shared clean-shared help
+.PHONY: generate migrate migrate-init migrate-deploy migrate-reset db-push db-reset-hard build up down logs clean auth chat game lobby waitingroom store dev test-auth copy-shared clean-shared help
 
 # Prisma commands
 generate:
-	npx prisma generate --schema=$(schema)
+	@echo "🔧 Generating Prisma client from shared schema..."
+	cd ../shared && bunx prisma generate --schema=./prisma/schema.prisma
+
+# Database configuration
+DATABASE_URL ?= postgresql://postgres:postgres@localhost:7432/kingsmaker
+
+# Database migration commands
+migrate:
+	@echo "🗄️ Running database migrations from shared schema..."
+	cd ../shared && DATABASE_URL=$(DATABASE_URL) bunx prisma migrate dev --schema=./prisma/schema.prisma
+
+migrate-init:
+	@echo "🔧 Creating initial migration from shared schema..."
+	cd ../shared && DATABASE_URL=$(DATABASE_URL) bunx prisma migrate dev --name init --schema=./prisma/schema.prisma
+
+migrate-deploy:
+	@echo "🚀 Deploying database migrations from shared schema..."
+	cd ../shared && DATABASE_URL=$(DATABASE_URL) bunx prisma migrate deploy --schema=./prisma/schema.prisma
+
+migrate-reset:
+	@echo "⚠️ Resetting database and running migrations from shared schema..."
+	cd ../shared && DATABASE_URL=$(DATABASE_URL) bunx prisma migrate reset --schema=./prisma/schema.prisma
+
+db-push:
+	@echo "📊 Pushing schema state to database (no migrations)..."
+	cd ../shared && DATABASE_URL=$(DATABASE_URL) bunx prisma db push --schema=./prisma/schema.prisma
+
+db-reset-hard:
+	@echo "💥 Hard reset: Dropping all tables and recreating from schema..."
+	cd ../shared && DATABASE_URL=$(DATABASE_URL) bunx prisma db push --force-reset --schema=./prisma/schema.prisma
 
 # Add @prisma/client to a service (usage: make install SERVICE=auth)
 install:
@@ -41,7 +70,8 @@ clean-shared:
 	@echo "✅ Cleaned all copied shared libraries!"
 
 # Docker Compose commands
-build:
+build: copy-shared
+	@echo "🐳 Building Docker services..."
 	docker-compose build
 
 up:
@@ -94,20 +124,26 @@ test-chat:
 # Help command
 help:
 	@echo "Available commands:"
-	@echo "  generate     - Generate Prisma client"
-	@echo "  copy-shared  - Copy shared library to all services for local development"
-	@echo "  clean-shared - Remove copied shared libraries from all services"
-	@echo "  build        - Build all Docker services"
-	@echo "  up           - Start all services in background"
-	@echo "  down         - Stop all services"
-	@echo "  logs         - Show logs for all services"
-	@echo "  clean        - Remove all containers, volumes, and images"
-	@echo "  dev          - Copy shared, start services and show logs"
-	@echo "  auth         - Build and run auth service with logs"
-	@echo "  chat         - Build and run chat service with logs"
-	@echo "  game         - Build and run game service with logs"
-	@echo "  lobby        - Build and run lobby service with logs"
-	@echo "  waitingroom  - Build and run waitingroom service with logs"
-	@echo "  store        - Build and run store service with logs"
-	@echo "  test-auth    - Test build auth service"
-	@echo "  help         - Show this help message"
+	@echo "  generate      - Generate Prisma client from shared schema"
+	@echo "  migrate       - Run database migrations from shared schema"
+	@echo "  migrate-init  - Create initial migration from shared schema"
+	@echo "  migrate-deploy- Deploy database migrations (production)"
+	@echo "  migrate-reset - Reset database and run migrations"
+	@echo "  db-push       - Push schema to database (no migrations)"
+	@echo "  db-reset-hard - Drop all tables and recreate from schema"
+	@echo "  copy-shared   - Copy shared library to all services for local development"
+	@echo "  clean-shared  - Remove copied shared libraries from all services"
+	@echo "  build         - Copy shared and build all Docker services"
+	@echo "  up            - Start all services in background"
+	@echo "  down          - Stop all services"
+	@echo "  logs          - Show logs for all services"
+	@echo "  clean         - Remove all containers, volumes, and images"
+	@echo "  dev           - Copy shared, start services and show logs"
+	@echo "  auth          - Build and run auth service with logs"
+	@echo "  chat          - Build and run chat service with logs"
+	@echo "  game          - Build and run game service with logs"
+	@echo "  lobby         - Build and run lobby service with logs"
+	@echo "  waitingroom   - Build and run waitingroom service with logs"
+	@echo "  store         - Build and run store service with logs"
+	@echo "  test-auth     - Test build auth service"
+	@echo "  help          - Show this help message"

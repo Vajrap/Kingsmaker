@@ -27,8 +27,8 @@ model User {
     customization Json      @default("[]") // Array of customization IDs as JSON
     friends       Json      @default("[]") // Array of friend IDs as JSON
     blocked       Json      @default("[]") // Array of blocked IDs as JSON
-    sessionId     String    @unique
-    sessionExpireAt DateTime
+    sessionId     String?   @unique        // Optional session ID for embedded approach
+    sessionExpireAt DateTime?             // Optional session expiration
 }
 
 enum UserType {

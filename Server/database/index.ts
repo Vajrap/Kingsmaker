@@ -1,7 +1,6 @@
-import { PrismaClient } from './generated/prisma/index.js';
+// Database service - Pure database connection utilities
+// Prisma client should be imported from @kingsmaker/shared instead
 
-// Export the Prisma client
-export const prisma = new PrismaClient();
-
-// Export types
-export * from './generated/prisma/index.js';
+export const getDatabaseUrl = () => {
+    return process.env.DATABASE_URL || 'postgresql://user:password@localhost:5432/kingsmaker';
+};
