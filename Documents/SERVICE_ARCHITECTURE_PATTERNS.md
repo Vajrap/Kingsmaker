@@ -1,6 +1,6 @@
 # AI CONTEXT: KingsMaker Service Architecture Patterns
 
-> **AI Data Assistance**: This document provides service implementation patterns for code assistance. **UPDATED** to reflect SessionManager service and authority-based validation.
+> **AI Data Assistance**: This document provides service implementation patterns for code assistance. **UPDATED** to reflect SessionManager service and removal of Redis session management.
 
 ## Service Directory Structure
 ```
@@ -9,10 +9,9 @@ services/[service-name]/
 ├── package.json          # Dependencies + @kingsmaker/shared
 ├── Dockerfile           # Bun container pattern
 ├── tsconfig.json        # TypeScript config
-├── lib/                 # Service utilities (redis.ts, state.ts, db.ts)
-├── routes/              # HTTP handlers (auth service only)
-└── prisma/              # Database schema (if needed)
-    └── schema.prisma
+├── lib/                 # Service utilities (sessionServiceClient.ts, db.ts)
+├── routes/              # HTTP handlers
+└── entity/              # Service-specific entities (sessionManager only)
 ```
 
 ## Package.json Pattern
@@ -24,7 +23,6 @@ services/[service-name]/
     "@prisma/client": "^6.9.0",
     "@elysiajs/cors": "^1.3.3",
     "elysia": "^1.3.4",
-    "ioredis": "^5.4.1",
     "bun-types": "latest",
     "dotenv": "^16.5.0"
   },
@@ -51,74 +49,82 @@ WORKDIR /app/services/[SERVICE-NAME]
 CMD ["bun", "run", "dist/index.js"]
 ```
 
-## Prisma Per-Service Pattern
-```prisma
-// services/auth/prisma/schema.prisma
-generator client {
-    provider = "prisma-client-js"
-    output   = "../generated/prisma"
+## SessionManager Integration Pattern
+```typescript
+// services/auth/lib/sessionServiceClient.ts
+const SESSION_MANAGER_URL = process.env.SESSION_MANAGER_URL || "http://sessionmanager:3000";
+
+export async function addConnectionToSessionManager(user: User): Promise<SessionManagerUserLoginResponse | null> {
+    const response = await fetch(`${SESSION_MANAGER_URL}/addConnection`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(user),
+    });
+    
+    const json = await response.json();
+    return json.success ? json.data : null;
 }
 
-datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
+export async function removeConnectionFromSessionManager(userId: number): Promise<boolean> {
+    const response = await fetch(`${SESSION_MANAGER_URL}/removeConnection`, {
+        method: 'DELETE',
+        body: JSON.stringify({ userId })
+    });
+    
+    const json = await response.json();
+    return json.success;
 }
-
-// Service owns its models only
-model User { ... }
-model Session { ... }
 ```
 
-## Redis Client Pattern
+## SessionManager Entity Pattern
 ```typescript
-// services/[service]/lib/redis.ts
-import { Redis } from 'ioredis';
+// services/sessionManager/entity/sessionManager.ts
+type ClientPresenceStatus = 'INITIAL' | 'IN_LOBBY' | 'IN_WAITING_ROOM' | 'IN_GAME' | 'OFFLINE';
 
-const redis = new Redis({
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT || '6379'),
-    retryStrategy: (times) => Math.min(times * 100, 2000),
-    enableReadyCheck: false,
-    maxRetriesPerRequest: null,
-});
+type ConnectedClient = {
+    sessionId: string;
+    userType: 'registered' | 'guest' | 'admin';
+    username: string;
+    presenceStatus: ClientPresenceStatus;
+    lastSeen: Date;
+    connectedAt: Date;
+}
 
-const subscriber = new Redis({ /* same config */ });
-const publisher = new Redis({ /* same config */ });
+class SessionManager {
+    private connectedClientsByUserId = new Map<number, ConnectedClient>();
 
-export { redis, subscriber, publisher };
-```
-
-## State Manager Pattern
-```typescript
-// services/[service]/lib/state.ts
-import { redis, publisher } from './redis';
-
-export class ServiceStateManager {
-    // Store with TTL
-    async storeData(key: string, data: any, ttl: number): Promise<void> {
-        await redis.setex(key, ttl, JSON.stringify(data));
+    connectClient(user: User) {
+        const now = new Date();
+        this.connectedClientsByUserId.set(user.id, {
+            sessionId: user.sessionId,
+            userType: user.type,
+            username: user.username,
+            presenceStatus: 'INITIAL',
+            lastSeen: now,
+            connectedAt: now,
+        });
     }
 
-    // Retrieve data
-    async getData(key: string): Promise<any | null> {
-        const data = await redis.get(key);
-        return data ? JSON.parse(data) : null;
-    }
-
-    // Publish events
-    async publishEvent(channel: string, data: any): Promise<void> {
-        await publisher.publish(channel, JSON.stringify(data));
+    updatePresence(userId: number, presence: ClientPresenceStatus) {
+        const client = this.connectedClientsByUserId.get(userId);
+        if (client) {
+            client.presenceStatus = presence;
+            client.lastSeen = new Date();
+        }
     }
 }
+
+export const sessionManager = new SessionManager();
 ```
 
 ## Database Connection Pattern
 ```typescript
-// services/[service]/lib/db.ts (if service uses DB)
-import { PrismaClient } from '../generated/prisma';
+// Import from shared Prisma client
+import { prisma } from "@kingsmaker/shared/prisma/prisma";
+import type { User } from "@kingsmaker/shared/prisma/generated";
 
-const db = new PrismaClient();
-export default db;
+// Use shared database client
+const user = await prisma.user.findUnique({ where: { id: userId } });
 ```
 
 ## Shared Types Usage
@@ -129,7 +135,7 @@ import type {
     WaitingRoomMetadata,
     LobbyClientMessage,
     ApiResponse,
-    ValidationResult
+    LoginResponse
 } from '@kingsmaker/shared/types/types';
 
 // Use in service logic
@@ -147,11 +153,10 @@ const sessionData: SessionManagerUserLoginResponse = { ... };
         - "70XX:3000"
     depends_on:
         - db
-        - redis    # All services depend on Redis
+        - sessionmanager  # Services depend on SessionManager instead of Redis
     environment:
         DATABASE_URL: postgresql://postgres:postgres@db:5432/kingsmaker
-        REDIS_HOST: redis
-        REDIS_PORT: 6379
+        SESSION_MANAGER_URL: http://sessionmanager:3000
 ```
 
 ## Environment Variables Pattern
@@ -159,13 +164,11 @@ const sessionData: SessionManagerUserLoginResponse = { ... };
 # Database (all services)
 DATABASE_URL=postgresql://postgres:postgres@db:5432/kingsmaker
 
-# Redis (services using Redis)
-REDIS_HOST=redis
-REDIS_PORT=6379
+# SessionManager integration
+SESSION_MANAGER_URL=http://sessionmanager:3000
 
 # Service-specific
 PORT=3000
-JWT_SECRET=your-secret (auth service only)
 ```
 
 ## TypeScript Config Pattern
@@ -197,28 +200,46 @@ JWT_SECRET=your-secret (auth service only)
 
 ## Service Communication Patterns
 ```typescript
-// HTTP REST (auth-service, sessionManager-service)
-app.post('/login', handler)
-app.post('/addConnection', handler)
+// HTTP REST Communication
+// Auth Service → SessionManager Service
+await addConnectionToSessionManager(user);
+await removeConnectionFromSessionManager(userId);
 
-// Service-to-Service HTTP calls
-const response = await fetch(`${SESSION_MANAGER_URL}/addConnection`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(user)
+// Other Services → SessionManager Service
+await fetch(`${SESSION_MANAGER_URL}/getConnection`, {
+    method: 'POST',
+    body: JSON.stringify({ userId })
 });
 
-// WebSocket (lobby, waiting-room, game)
-const wss = new WebSocketServer({ port: PORT });
+// WebSocket (lobby-service, waiting-room, game-service)
+// Session validation through SessionManager HTTP endpoints
+```
 
-// Redis Pub/Sub (inter-service)
-subscriber.on('message', (channel, message) => { ... });
-await publisher.publish('event_name', JSON.stringify(data));
+## Session Management Flow
+```typescript
+// 1. Auth Service validates credentials
+// 2. Auth Service generates/reuses sessionId in PostgreSQL
+// 3. Auth Service calls SessionManager.addConnection(user)
+// 4. SessionManager tracks presence in-memory
+// 5. Other services validate sessions via SessionManager HTTP API
+// 6. Presence updates flow through SessionManager.updatePresence()
+```
 
-// Service Validation Pattern
-export async function validateServiceRequest(data: unknown): Promise<ValidationResult> {
-  // Validate input structure
-  // Validate service authority
-  // Return validation result
+## Error Handling Pattern
+```typescript
+function isApiResponse(obj: unknown): obj is { success: boolean; data?: unknown; message?: string } {
+    return (
+        typeof obj === 'object' &&
+        obj !== null &&
+        'success' in obj &&
+        typeof (obj as any).success === 'boolean'
+    );
+}
+
+// Usage in service clients
+const json = await response.json();
+if (!isApiResponse(json) || !json.success) {
+    console.error(`Service call failed: ${json.message || response.status}`);
+    return null;
 }
 ``` 

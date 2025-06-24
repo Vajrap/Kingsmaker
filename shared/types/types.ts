@@ -41,7 +41,7 @@ export type GuestBody = {
 
 }
 
-export type SessionManagerUserLoginResponse = {
+export type SessionData = {
     sessionId: string;
     userId: number;
     userType: 'registered' | 'guest' | 'admin';
@@ -82,14 +82,6 @@ export type LogoutResponse = {
 };
 
 // Lobby and Room related types
-export interface SessionData {
-    sessionId: string;
-    userId: string;
-    userType: 'registered' | 'guest';
-    username: string;
-    connectedAt: string;
-    lastSeen: string;
-}
 
 export interface WaitingRoomMetadata {
     id: string;
@@ -131,19 +123,18 @@ export interface PlayerLocation {
 
 // Lobby WebSocket Message types
 export type LobbyClientMessage =
-    | { type: "GET_ROOM_LIST"; data: {} }
-    | { type: "CREATE_ROOM"; data: { name: string; maxPlayers: 2 | 3 | 4 } }
-    | { type: "JOIN_ROOM"; data: { roomId: string } }
-    | { type: "LEAVE_ROOM"; data: { roomId: string } }
-    | { type: "UPDATE_PROFILE"; data: { profile: PlayerProfile } }
-    | { type: "REFRESH_LOBBY"; data: {} };
+    | { type: "GET_ROOM_LIST"; data: { sessionId: string } }
+    | { type: "CREATE_ROOM"; data: { sessionId: string; name: string; maxPlayers: 2 | 3 | 4 } }
+    | { type: "JOIN_ROOM"; data: { sessionId: string; roomId: string } }
 
 export type LobbyServerMessage =
     | { type: "ROOM_LIST"; data: { rooms: WaitingRoomMetadata[] } }
     | { type: "ROOM_CREATED"; data: { room: WaitingRoomMetadata } }
     | { type: "ROOM_JOINED"; data: { roomId: string; success: boolean } }
     | { type: "LOBBY_UPDATE"; data: { rooms: WaitingRoomMetadata[]; onlinePlayers: number } }
-    | { type: "ERROR"; data: { message: string; code: string } };
+    | { type: "ERROR"; data: { message: string } }
+    | { type: "IN_WAITING_ROOM"; data: { roomId: string } }
+    | { type: "IN_GAME"; data: { gameId: string } }
 
 // Pub/Sub Event types
 export interface PubSubEvent<T = any> {

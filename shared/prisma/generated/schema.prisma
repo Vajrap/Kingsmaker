@@ -1,45 +1,45 @@
 generator client {
-    provider      = "prisma-client-js"
-    output        = "./generated"
-    binaryTargets = ["native", "linux-arm64-openssl-1.1.x"]
+  provider      = "prisma-client-js"
+  output        = "./generated"
+  binaryTargets = ["native", "linux-arm64-openssl-1.1.x"]
 }
 
 datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-    id              Int       @id @default(autoincrement())
-    username        String    @unique
-    type            UserType
-    email           String    @unique
-    password        String
-    nameAlias       String    @unique
-    isConfirmed     Boolean   @default(false)
-    highestScore    Int       @default(0)
-    totalGames      Int       @default(0)
-    totalWins       Int       @default(0)
-    totalLosses     Int       @default(0)
-    totalTies       Int       @default(0)
-    achievements    Json      @default("[]") // Array of achievement IDs as JSON
-    unlockables     Json      @default("[]") // Array of unlockable IDs as JSON
-    customization   Json      @default("[]") // Array of customization IDs as JSON
-    friends         Json      @default("[]") // Array of friend IDs as JSON
-    blocked         Json      @default("[]") // Array of blocked IDs as JSON
-    sessionId       String?   @unique // Optional session ID for embedded approach
-    sessionExpireAt DateTime? // Optional session expiration
+  id              Int       @id @default(autoincrement())
+  username        String    @unique
+  type            UserType
+  email           String    @unique
+  password        String
+  nameAlias       String    @unique
+  isConfirmed     Boolean   @default(false)
+  highestScore    Int       @default(0)
+  totalGames      Int       @default(0)
+  totalWins       Int       @default(0)
+  totalLosses     Int       @default(0)
+  totalTies       Int       @default(0)
+  achievements    Json      @default("[]") // Array of achievement IDs as JSON
+  unlockables     Json      @default("[]") // Array of unlockable IDs as JSON
+  customization   Json      @default("[]") // Array of customization IDs as JSON
+  friends         Json      @default("[]") // Array of friend IDs as JSON
+  blocked         Json      @default("[]") // Array of blocked IDs as JSON
+  sessionId       String?   @unique // Optional session ID for embedded approach
+  sessionExpireAt DateTime? // Optional session expiration
 }
 
 enum UserType {
-    registered
-    guest
-    admin
+  registered
+  guest
+  admin
 }
 
 model PendingFriendRequest {
-    id         Int      @id @default(autoincrement())
-    sernderID  Int
-    receiverID Int
-    createdAt  DateTime
+  id         Int      @id @default(autoincrement())
+  sernderID  Int
+  receiverID Int
+  createdAt  DateTime
 }

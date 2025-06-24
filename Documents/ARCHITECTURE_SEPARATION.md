@@ -55,11 +55,13 @@ Auth Service (DB):
   - SessionId generation/expiration
 
 SessionManager Service (In-Memory):
-  - User presence status
-  - Connection tracking
+  - User presence status tracking
+  - Active connection management
+  - Session validation for other services
 
-Lobby Service (Redis):
-  - "waitingRooms:<roomId>": WaitingRoomMetadata
+Lobby Service (Redis + SessionManager):
+  - Room state: "waitingRooms:<roomId>": WaitingRoomMetadata
+  - Session validation via SessionManager HTTP API
   - Room discovery/listing state
 
 WaitingRoom Service (Redis):
@@ -128,9 +130,9 @@ Redis:
 ```
 auth-service → postgresql, sessionManager-service
 sessionManager-service → postgresql (user validation)
-lobby-service → redis, sessionManager-service
-waiting-room → redis, sessionManager-service
-game-service → redis, sessionManager-service
+lobby-service → redis (room state), sessionManager-service (session validation)
+waiting-room → redis (room/player state), sessionManager-service (session validation)
+game-service → redis (game state), sessionManager-service (session validation)
 
 Authority Flow:
 auth → sessionManager (presence tracking)

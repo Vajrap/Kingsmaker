@@ -10,5 +10,8 @@
     "build": "bun run build:prisma && bun run build:services",
     "build:prisma": "cd database && bunx prisma generate",
     "build:services": "cd services && bun run build"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.10.1"
   }
-} 
+}

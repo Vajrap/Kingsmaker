@@ -2,37 +2,32 @@ FROM oven/bun:1.0.35 AS base
 
 WORKDIR /app
 
-# Copy the root workspace package.json to set up the workspace
-COPY Server/package.json ./
-COPY Server/package-lock.json* ./
-
-# Copy shared package  
+# Copy shared package first (from root context)
 COPY shared ./shared
-COPY Server/database ./database
-
-# Copy the specific service
-COPY Server/services/lobby ./services/lobby
 
 # Set up environment for Prisma
 RUN echo "DATABASE_URL=postgresql://postgres:postgres@db:5432/kingsmaker" > .env
 
-# Install all workspace dependencies
-RUN bun install
+# Install shared dependencies and generate Prisma client
+RUN cd shared && bun install && bunx prisma generate --schema=./prisma/schema.prisma
 
-# Generate Prisma client first
-RUN cd database && bunx prisma generate
-
-# Generate Prisma client in shared
-RUN cd shared && bunx prisma generate --schema=./prisma/schema.prisma
-
-# Build shared dependencies first
+# Build shared library with correct imports
 RUN cd shared && bun run build
 
+# Copy the lobby service (from root context)
+COPY Server/services/lobby ./lobby
+
+# Install lobby service dependencies
+RUN cd lobby && bun install
+
+# Copy shared library into lobby service (bypass symlink issues)
+RUN mkdir -p lobby/shared && cp -r shared/* lobby/shared/
+
 # Build the lobby service
-RUN cd services/lobby && bun build ./index.ts --outdir ./dist --target node
+RUN cd lobby && bun build ./index.ts --outdir ./dist --target node
 
 # Set working directory to the lobby service
-WORKDIR /app/services/lobby
+WORKDIR /app/lobby
 
 # Start the service
 CMD ["bun", "run", "dist/index.js"]

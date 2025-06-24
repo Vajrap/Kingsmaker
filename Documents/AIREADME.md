@@ -53,6 +53,7 @@
    - Match existing Redis client setup
    - Follow same error handling patterns
    - Use consistent naming conventions
+   - CRITICAL: Use correct import patterns (see Import Patterns section)
 ```
 
 ### Phase 4: Validation & Documentation
@@ -120,11 +121,56 @@
 - Order of operations
 ```
 
+## 🚨 CRITICAL: Import Patterns
+
+### The Problem: Inconsistent Import Patterns
+The project has **TWO DIFFERENT** import patterns that cause issues:
+
+#### ❌ WRONG: Relative Path Imports (auth service)
+```typescript
+// auth service uses relative paths - CAUSES PROBLEMS
+import type { User } from "../shared/prisma/generated";
+import { prisma } from "../shared/prisma/prisma";
+import { type LoginResponse, errorRes, ok } from "../shared/types/types";
+```
+
+#### ✅ CORRECT: Package Import (sessionManager service)
+```typescript
+// sessionManager service uses package imports - WORKS CORRECTLY
+import type { User } from "@kingsmaker/shared/prisma/generated";
+import { prisma } from "@kingsmaker/shared/prisma/prisma";
+import { type ApiResponse, errorRes, ok } from "@kingsmaker/shared/types/types";
+```
+
+### How It Works (from Makefile)
+1. **`make copy-shared`** copies `../shared/*` to each `services/[service]/shared/` folder
+2. **Docker build** uses these copied files for relative imports
+3. **Package.json** also declares `"@kingsmaker/shared": "file:../../shared"`
+4. **Some services work with `@kingsmaker/shared`**, others need copied files
+
+### The Fix: Use @kingsmaker/shared Everywhere
+```typescript
+// Always use this pattern:
+import { prisma } from "@kingsmaker/shared/prisma/prisma";
+import type { User } from "@kingsmaker/shared/prisma/generated";
+import { type ApiResponse, errorRes, ok } from "@kingsmaker/shared/types/types";
+import { jsonPost } from "@kingsmaker/shared/utils/jsonPost";
+```
+
+### Build Process Dependencies
+```bash
+# Required for proper imports:
+1. cd ../shared && bun run build          # Build shared library first
+2. make copy-shared                       # Copy to services (for Docker)
+3. cd services/[service] && bun install   # Install @kingsmaker/shared package
+```
+
 ## 🎯 Success Criteria
 
 A task is complete when:
 1. ✅ All architecture docs have been consulted
 2. ✅ temp_devlog.md plan executed fully
 3. ✅ Changes follow established patterns
-4. ✅ devlog.md reflects new status
-5. ✅ Clear testing path provided to user 
+4. ✅ **ALL imports use @kingsmaker/shared pattern**
+5. ✅ devlog.md reflects new status
+6. ✅ Clear testing path provided to user 

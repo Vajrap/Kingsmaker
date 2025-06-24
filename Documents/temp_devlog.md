@@ -1,5 +1,52 @@
 # TEMP_DEVLOG.md - Architecture Rewrite Completed ✅
 
+## 🚨 **CRITICAL DISCOVERY: Import Pattern Inconsistency**
+
+### **The Problem: Two Different Import Patterns**
+During the architecture documentation review, I discovered that the project has **inconsistent import patterns** that can cause serious issues:
+
+#### ❌ **Auth Service (Problematic Pattern):**
+```typescript
+// auth service uses RELATIVE PATHS to copied shared folder
+import type { User } from "../shared/prisma/generated";
+import { prisma } from "../shared/prisma/prisma";
+import { type LoginResponse, errorRes, ok } from "../shared/types/types";
+```
+
+#### ✅ **SessionManager Service (Correct Pattern):**
+```typescript
+// sessionManager service uses PACKAGE IMPORTS  
+import type { User } from "@kingsmaker/shared/prisma/generated";
+import { prisma } from "@kingsmaker/shared/prisma/prisma";
+import { type ApiResponse, errorRes, ok } from "@kingsmaker/shared/types/types";
+```
+
+### **Why This Matters:**
+1. **Build Inconsistency**: Auth service depends on `make copy-shared` to work
+2. **Development Issues**: Different import styles cause confusion
+3. **Docker Problems**: Relative imports require copied files to exist
+4. **Type Conflicts**: Two different sources for the same types
+
+### **The Root Cause (from Makefile Analysis):**
+- `make copy-shared` copies `../shared/*` to each `services/[service]/shared/` folder
+- Some services (auth) import from copied files: `"../shared/..."`
+- Other services (sessionManager) import from package: `"@kingsmaker/shared/..."`
+- Both work because package.json has: `"@kingsmaker/shared": "file:../../shared"`
+
+### **Recommended Solution:**
+**Standardize ALL services to use `@kingsmaker/shared` imports:**
+```typescript
+// Use this pattern everywhere:
+import { prisma } from "@kingsmaker/shared/prisma/prisma";
+import type { User } from "@kingsmaker/shared/prisma/generated";
+import { type ApiResponse, errorRes, ok } from "@kingsmaker/shared/types/types";
+import { jsonPost } from "@kingsmaker/shared/utils/jsonPost";
+```
+
+**This discovery has been documented in `AIREADME.md` as a critical pattern for all future development.**
+
+---
+
 ## Task Completed: Architecture Documentation Rewrite
 
 ### ✅ **NEW DOCUMENTS CREATED:**
@@ -10,7 +57,10 @@
 ### ✅ **EXISTING DOCUMENTS UPDATED:**
 1. **`ARCHITECTURE_SEPARATION.md`** - Updated with SessionManager service, removed Redis session patterns
 2. **`auth-session-architecture.md`** - Added SessionManager integration, removed obsolete JWT/Redis patterns
-3. **`SERVICE_ARCHITECTURE_PATTERNS.md`** - Updated dependencies, communication patterns, validation patterns
+3. **`SERVICE_ARCHITECTURE_PATTERNS.md`** - Completely refactored to remove Redis session management patterns, added SessionManager integration patterns
+4. **`network-architecture.md`** - Updated service matrix and dependencies to reflect SessionManager architecture
+5. **`lobby-system-architecture.md`** - Updated to show split between Redis (room state) and SessionManager (session validation)
+6. **`AIREADME.md`** - Added CRITICAL import patterns section documenting the inconsistency between auth service (relative imports) and sessionManager service (@kingsmaker/shared imports)
 
 ### 🎯 **Architecture Changes Implemented:**
 

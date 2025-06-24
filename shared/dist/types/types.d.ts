@@ -18,7 +18,7 @@ export type AuthBody = {
     token: string;
 };
 export type GuestBody = {};
-export type SessionManagerUserLoginResponse = {
+export type SessionData = {
     sessionId: string;
     userId: number;
     userType: 'registered' | 'guest' | 'admin';
@@ -52,14 +52,6 @@ export type LogoutBody = {
 export type LogoutResponse = {
     message: string;
 };
-export interface SessionData {
-    sessionId: string;
-    userId: string;
-    userType: 'registered' | 'guest';
-    username: string;
-    connectedAt: string;
-    lastSeen: string;
-}
 export interface WaitingRoomMetadata {
     id: string;
     name: string;
@@ -96,31 +88,22 @@ export interface PlayerLocation {
 }
 export type LobbyClientMessage = {
     type: "GET_ROOM_LIST";
-    data: {};
+    data: {
+        sessionId: string;
+    };
 } | {
     type: "CREATE_ROOM";
     data: {
+        sessionId: string;
         name: string;
         maxPlayers: 2 | 3 | 4;
     };
 } | {
     type: "JOIN_ROOM";
     data: {
+        sessionId: string;
         roomId: string;
     };
-} | {
-    type: "LEAVE_ROOM";
-    data: {
-        roomId: string;
-    };
-} | {
-    type: "UPDATE_PROFILE";
-    data: {
-        profile: PlayerProfile;
-    };
-} | {
-    type: "REFRESH_LOBBY";
-    data: {};
 };
 export type LobbyServerMessage = {
     type: "ROOM_LIST";
@@ -148,7 +131,16 @@ export type LobbyServerMessage = {
     type: "ERROR";
     data: {
         message: string;
-        code: string;
+    };
+} | {
+    type: "IN_WAITING_ROOM";
+    data: {
+        roomId: string;
+    };
+} | {
+    type: "IN_GAME";
+    data: {
+        gameId: string;
     };
 };
 export interface PubSubEvent<T = any> {

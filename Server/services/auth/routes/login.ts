@@ -17,7 +17,7 @@ export async function handleLogin({ body }: {body: LoginBody}): Promise<ApiRespo
         return errorRes("Invalid password");
     };
 
-    if (user.sessionExpireAt < new Date() || !user.sessionId) {
+    if (!user.sessionExpireAt || user.sessionExpireAt < new Date() || !user.sessionId) {
         const result = await assignUniqueSessionId(user.id);
         if (!result) {
             return errorRes("Failed to update user session");
@@ -34,10 +34,10 @@ export async function handleLogin({ body }: {body: LoginBody}): Promise<ApiRespo
     }
 
     const data: LoginResponse = {
-        nameAlias: user.nameAlias,
+        sessionId: user.sessionId || "",
+        userType: user.type,
         username: user.username,
-        userType: "registered",
-        sessionId: user.sessionId,
+        nameAlias: user.nameAlias,
         presenceStatus: sessionManagerResponse?.presenceStatus || "INITIAL"
     };
 

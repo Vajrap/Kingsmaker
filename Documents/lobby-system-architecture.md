@@ -1,29 +1,63 @@
 # AI CONTEXT: KingsMaker Lobby Service Architecture
 
-> **AI Data Assistance**: This document provides lobby service context for code assistance. Not intended for human documentation.
+> **AI Data Assistance**: This document provides lobby service context for code assistance. **UPDATED** to reflect SessionManager service integration.
 
 ## Service Overview
 ```
 lobby-service (Bun:7004) → WebSocket server, Room discovery, Player tracking
-Technology: Bun + WebSocket + Redis + ioredis
+sessionManager-service (Bun:7007) → Session validation, presence tracking
+Technology: Bun + WebSocket + Redis (room state) + SessionManager (session validation)
 File: services/lobby/index.ts
 ```
 
-## Redis State Management
+## State Management Split
 ```typescript
-// Redis Keys (TTL indicated)
-"loggedInUsers:<sessionId>": SessionData // 24h
-"waitingRooms:<roomId>": WaitingRoomMetadata // 2h  
-"waitingRoomPlayers:<roomId>": PlayerSlot[] // 2h
-"playerLocation:<userId>": PlayerLocation // 30min
+// SessionManager (In-Memory) - Session & Presence
+Map<userId, ConnectedClient> where ConnectedClient = {
+  sessionId: string;
+  userType: 'registered' | 'guest' | 'admin';
+  username: string;
+  presenceStatus: 'INITIAL' | 'IN_LOBBY' | 'IN_WAITING_ROOM' | 'IN_GAME' | 'OFFLINE';
+  lastSeen: Date;
+  connectedAt: Date;
+}
+
+// Redis - Room State Only
+"waitingRooms:<roomId>": WaitingRoomMetadata // 2h TTL
+"waitingRoomPlayers:<roomId>": PlayerSlot[] // 2h TTL
 
 // State Manager: services/lobby/lib/state.ts
 class LobbyStateManager {
-  storeSession(sessionId, userData): Promise<void>
-  getSession(sessionId): Promise<SessionData>
   storeRoom(roomId, roomData): Promise<void>
   getAllRooms(): Promise<WaitingRoomMetadata[]>
   publishRoomCreated(roomId, roomData): Promise<void>
+}
+```
+
+## Session Validation Pattern
+```typescript
+// services/lobby/lib/sessionServiceClient.ts
+const SESSION_MANAGER_URL = process.env.SESSION_MANAGER_URL || "http://sessionmanager:3000";
+
+export async function validateSession(userId: number): Promise<ConnectedClient | null> {
+    const response = await fetch(`${SESSION_MANAGER_URL}/getConnection`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+    });
+    
+    const json = await response.json();
+    return json.success ? json.data : null;
+}
+
+export async function updatePresence(userId: number, presence: string): Promise<boolean> {
+    const response = await fetch(`${SESSION_MANAGER_URL}/updatePresence`, {
+        method: 'POST',
+        body: JSON.stringify({ userId, presence })
+    });
+    
+    const json = await response.json();
+    return json.success;
 }
 ```
 
@@ -62,9 +96,9 @@ type LobbyServerMessage =
 ## Connection Flow
 ```
 1. Client connects: ws://localhost:7004?sessionId=<sessionId>
-2. lobby-service validates sessionId via Redis
-3. Connection stored in Map<sessionId, {ws, userData}>
-4. Player location updated to 'lobby'
+2. lobby-service validates sessionId via SessionManager HTTP API
+3. SessionManager updates presence to 'IN_LOBBY'
+4. Connection stored in Map<sessionId, {ws, userData}>
 5. Initial lobby state sent to client
 ```
 
@@ -91,11 +125,13 @@ interface PlayerSlot {
   lastSeen: string;
 }
 
-interface PlayerLocation {
-  location: 'lobby' | 'waiting-room' | 'game';
-  roomId?: string;
-  gameId?: string;
-  lastSeen: string;
+interface ConnectedClient {
+  sessionId: string;
+  userType: 'registered' | 'guest' | 'admin';
+  username: string;
+  presenceStatus: 'INITIAL' | 'IN_LOBBY' | 'IN_WAITING_ROOM' | 'IN_GAME' | 'OFFLINE';
+  lastSeen: Date;
+  connectedAt: Date;
 }
 ```
 
@@ -103,19 +139,21 @@ interface PlayerLocation {
 ```
 Room Creation Flow:
 1. Client → lobby-service: CREATE_ROOM
-2. lobby-service → Redis: Store room metadata  
-3. lobby-service → Redis: PUBLISH room_created
-4. waiting-room service ← Redis: SUBSCRIBE room_created
-5. waiting-room initializes room instance
-6. lobby-service → Client: ROOM_CREATED confirmation
+2. lobby-service validates session via SessionManager HTTP API
+3. lobby-service → Redis: Store room metadata  
+4. lobby-service → Redis: PUBLISH room_created
+5. waiting-room service ← Redis: SUBSCRIBE room_created
+6. waiting-room initializes room instance
+7. lobby-service → Client: ROOM_CREATED confirmation
 
 Player Join Flow:
 1. Client → lobby-service: JOIN_ROOM
-2. lobby-service validates room availability via Redis
-3. lobby-service updates room player count
-4. lobby-service → Redis: PUBLISH player_joined  
-5. lobby-service → Client: ROOM_JOINED confirmation
-6. Client transitions to waiting-room WebSocket
+2. lobby-service validates session via SessionManager HTTP API
+3. lobby-service validates room availability via Redis
+4. lobby-service → SessionManager: updatePresence(userId, 'IN_WAITING_ROOM')
+5. lobby-service → Redis: PUBLISH player_joined  
+6. lobby-service → Client: ROOM_JOINED confirmation
+7. Client transitions to waiting-room WebSocket
 ```
 
 ## Implementation Details
@@ -131,7 +169,10 @@ async function handleCreateRoom(sessionId: string, roomData)
 async function handleJoinRoom(sessionId: string, roomId: string)
 async function broadcastLobbyUpdate()
 
-// Redis integration: services/lobby/lib/redis.ts  
+// SessionManager integration: services/lobby/lib/sessionServiceClient.ts  
+import { validateSession, updatePresence } from './sessionServiceClient';
+
+// Redis integration (room state only): services/lobby/lib/redis.ts
 import { Redis } from 'ioredis';
 const redis = new Redis({ host: REDIS_HOST, port: REDIS_PORT });
 const subscriber = new Redis({ host: REDIS_HOST, port: REDIS_PORT });
@@ -140,7 +181,8 @@ const publisher = new Redis({ host: REDIS_HOST, port: REDIS_PORT });
 
 ## Service Dependencies
 ```
-lobby-service → redis (state management, pub/sub)
+lobby-service → sessionManager-service (session validation, presence tracking)
+lobby-service → redis (room state management, pub/sub)
 lobby-service → shared types (@kingsmaker/shared)
 waiting-room ← lobby-service (via Redis pub/sub)
 game-service ← lobby-service (via Redis pub/sub)

@@ -12,6 +12,66 @@ function isApiResponse(obj: unknown): obj is { success: boolean; data?: unknown;
     );
 }
 
+export async function getSession(sessionId: string): Promise<SessionData | null> {
+    try {
+
+        const response = await fetch(`${SESSION_MANAGER_URL}/getSession`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ sessionId }),    
+        });
+
+        const json = await response.json();
+
+        if (!isApiResponse(json)) {
+            console.error(`SessionManager /getSession returned invalid structure`, json);
+            return null;
+        }
+
+        if (!response.ok || !json.success) {
+            console.error(`SessionManager /getSession failed: ${json.message || response.status}`);
+            return null;
+        }
+
+        return json.data as SessionData;
+    } catch (error) {
+        console.error(`Failed to call SessionManager /getSession:`, error);
+        return null;
+    }
+}
+
+export async function updatePresenceInSessionManager(sessionId: string, presenceStatus: string): Promise<SessionData | null> {
+    try {
+        const response = await fetch(`${SESSION_MANAGER_URL}/updatePresence`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ sessionId, presenceStatus }),
+        });
+
+        const json = await response.json();
+
+        if (!isApiResponse(json)) {
+            console.error(`SessionManager /updatePresence returned invalid structure`, json);
+            return null;
+        }
+
+        if (!response.ok || !json.success) {
+            console.error(`SessionManager /updatePresence failed: ${json.message || response.status}`);
+            return null;
+        }
+
+        return json.data as SessionData;
+    } catch (error) {
+        console.error(`Failed to call SessionManager /updatePresence:`, error);
+        return null;
+    }
+}
+
+
 export async function addConnectionToSessionManager(user: User): Promise<SessionData | null> {
     try {
         const response = await fetch(`${SESSION_MANAGER_URL}/addConnection`, {
