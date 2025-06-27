@@ -6,7 +6,8 @@ import type {
 import 'dotenv/config';
 import { Elysia, t } from 'elysia';
 import { handleGetRoomList } from './handler/getRoomList';
-import { getSession } from './lib/sessionServiceClient';
+import { sessionManagerClient } from './shared/session/sessionManagerClient';
+import { prisma } from './shared/prisma/prisma';
 import { handleJoinRoom } from './handler/joinRoom';
 import { handleCreateRoom } from './handler/createRoom';
 import { ElysiaWS } from 'elysia/dist/ws';
@@ -18,6 +19,77 @@ const connections = new Map<string, {
     session: SessionData
 }>();
 
+// Helper function for session validation
+async function getUserIdFromSessionId(sessionId: string): Promise<number | null> {
+    const user = await prisma.user.findFirst({ 
+        where: { sessionId },
+        select: { id: true }
+    });
+    return user?.id || null;
+}
+
+// WebSocket validation utilities (inline)
+interface WSMessage {
+    type: string;
+    data?: {
+        sessionId?: string;
+        [key: string]: any;
+    };
+}
+
+interface WSValidationResult {
+    isValid: boolean;
+    userId?: number;
+    sessionData?: SessionData;
+    errorMessage?: string;
+}
+
+async function validateWSSession(
+    message: WSMessage,
+    getUserIdFromSessionId: (sessionId: string) => Promise<number | null>
+): Promise<WSValidationResult> {
+    const sessionId = message.data?.sessionId;
+    if (!sessionId) {
+        return {
+            isValid: false,
+            errorMessage: 'MISSING_SESSION_ID'
+        };
+    }
+
+    try {
+        const sessionData = await sessionManagerClient.getSessionBySessionId(sessionId, getUserIdFromSessionId);
+        
+        if (!sessionData) {
+            return {
+                isValid: false,
+                errorMessage: 'INVALID_SESSION'
+            };
+        }
+
+        return {
+            isValid: true,
+            userId: sessionData.userId,
+            sessionData,
+        };
+    } catch (error) {
+        console.error('Session validation error:', error);
+        return {
+            isValid: false,
+            errorMessage: 'SESSION_VALIDATION_ERROR'
+        };
+    }
+}
+
+function createWSErrorMessage(type: string, errorCode: string, message?: string): LobbyServerMessage {
+    return {
+        type: 'ERROR',
+        data: {
+            code: errorCode,
+            message: message || errorCode
+        }
+    } as LobbyServerMessage;
+}
+
 new Elysia()
     .ws('/lobby', {
         body: t.Object({
@@ -25,13 +97,24 @@ new Elysia()
             data: t.Optional(t.Any())
         }),
         async open(ws) {
-            const sessionId = ws.data.query.sessionId;
-            if (!sessionId) { return ws.send(errorMsg('MISSING_SESSION_ID')) }
-            const existedSession = await getSession(sessionId);
+            console.log('New WebSocket connection opened, waiting for first message...');
+            // Don't validate here - wait for first message with sessionId
+        },
+        async message(ws, msg: LobbyClientMessage) {
+            // Validate session using standardized approach
+            const validation = await validateWSSession(msg, getUserIdFromSessionId);
+            
+            if (!validation.isValid) {
+                return ws.send(JSON.stringify(createWSErrorMessage('VALIDATION_ERROR', validation.errorMessage!)));
+            }
 
-            // If existed session (from SM service), means, user is already logged in,
-            if (existedSession) {
-                switch (existedSession.presenceStatus) {
+            const { sessionData } = validation;
+            const sessionId = msg.data?.sessionId!;
+
+            // Store connection if not already stored
+            if (!connections.has(sessionId)) {
+                // Handle presence status on first connection
+                switch (sessionData!.presenceStatus) {
                     case('IN_WAITING_ROOM'): {
                         // TODO: Check if WaitingRoom is still valid
                         // Check the send player back into the waiting room
@@ -43,57 +126,52 @@ new Elysia()
                         // But if the game is ended, not found, just set the player into the lobby
                     }
                 }
-            } else {
-                // Since Auth set user session into SM service, if not existed that's going to be an error
-                return ws.send(errorMsg('INVALID_SESSION'));
-            };
-            
-            // Set player into the lobby => add into connections map
-            connections.set(sessionId, { ws, session: existedSession });
+                
+                // Set player into the lobby => add into connections map
+                connections.set(sessionId, { ws, session: sessionData! });
+                console.log(`User with ID: ${sessionData!.userId} connected to lobby`);
 
-            // Send room list to the player
-            const roomList = await handleGetRoomList();
+                // Send initial room list for first connection
+                if (msg.type === 'GET_ROOM_LIST') {
+                    const roomList = await handleGetRoomList();
+                    return ws.send(JSON.stringify(roomList));
+                }
+            }
 
-            ws.send(JSON.stringify(roomList));
-        },
-        async message(ws, msg: LobbyClientMessage) {
-            const sessionId = msg.data?.sessionId;
-            if (!sessionId) { return ws.send(errorMsg('MISSING_SESSION_ID')) }
-
-            const session = await getSession(msg.data.sessionId);
-            if (!session) { return ws.send(errorMsg('INVALID_SESSION')) }
-
+            // Handle different message types
             let response: LobbyServerMessage;
 
             switch (msg.type) {
                 case("GET_ROOM_LIST"): {
-                    response = await handleGetRoomList(session, msg);
+                    response = await handleGetRoomList(sessionData, msg);
                     break;
                 }
                 case("JOIN_ROOM"): {
-                    response = await handleJoinRoom(session, msg)
+                    response = await handleJoinRoom(sessionData!, msg)
                     break;
                 }
                 case("CREATE_ROOM"): {
-                    response = await handleCreateRoom(session, msg)
+                    response = await handleCreateRoom(sessionData!, msg)
                     break;
                 }
-                default: { response = errorMsg('UNKNOWN_MESSAGE_TYPE') }
+                default: { 
+                    response = createWSErrorMessage('MESSAGE_ERROR', 'UNKNOWN_MESSAGE_TYPE');
+                }
             }
 
             ws.send(JSON.stringify(response));
         },
-    close(ws) {},
+        close(ws) {
+            // Remove connection from map when client disconnects
+            for (const [sessionId, connection] of connections) {
+                if (connection.ws === ws) {
+                    connections.delete(sessionId);
+                    console.log(`User disconnected from lobby: ${sessionId}`);
+                    break;
+                }
+            }
+        },
     })
     .listen(PORT);
 
 console.log(`🚀 Lobby service running on http://localhost:${PORT}`);
-
-function errorMsg(msg: string): LobbyServerMessage {
-    return {
-        type: 'ERROR',
-        data: {
-            message: msg,
-        }
-    };
-}
