@@ -10,7 +10,6 @@ import { getSession } from './lib/sessionServiceClient';
 import { handleJoinRoom } from './handler/joinRoom';
 import { handleCreateRoom } from './handler/createRoom';
 import { ElysiaWS } from 'elysia/dist/ws';
-import { handleOpen } from 'handler/open';
 
 const PORT = parseInt(process.env.PORT || '3000');
 
@@ -30,15 +29,33 @@ new Elysia()
             if (!sessionId) { return ws.send(errorMsg('MISSING_SESSION_ID')) }
             const existedSession = await getSession(sessionId);
 
-            if (!existedSession) { return ws.send(errorMsg('INVALID_SESSION')) };
-
-            const response = await handleOpen(existedSession);
-
+            // If existed session (from SM service), means, user is already logged in,
+            if (existedSession) {
+                switch (existedSession.presenceStatus) {
+                    case('IN_WAITING_ROOM'): {
+                        // TODO: Check if WaitingRoom is still valid
+                        // Check the send player back into the waiting room
+                        // If the waiting room is not found, set the player into the lobby
+                    }
+                    case('IN_GAME'): {
+                        // TODO: Check if Game ended
+                        // This one will need to send the player back to the game is the game is still running
+                        // But if the game is ended, not found, just set the player into the lobby
+                    }
+                }
+            } else {
+                // Since Auth set user session into SM service, if not existed that's going to be an error
+                return ws.send(errorMsg('INVALID_SESSION'));
+            };
+            
+            // Set player into the lobby => add into connections map
             connections.set(sessionId, { ws, session: existedSession });
 
-            ws.send(JSON.stringify(response));
-        },
+            // Send room list to the player
+            const roomList = await handleGetRoomList();
 
+            ws.send(JSON.stringify(roomList));
+        },
         async message(ws, msg: LobbyClientMessage) {
             const sessionId = msg.data?.sessionId;
             if (!sessionId) { return ws.send(errorMsg('MISSING_SESSION_ID')) }
@@ -50,7 +67,7 @@ new Elysia()
 
             switch (msg.type) {
                 case("GET_ROOM_LIST"): {
-                    response = await handleGetRoomList();
+                    response = await handleGetRoomList(session, msg);
                     break;
                 }
                 case("JOIN_ROOM"): {
@@ -80,5 +97,3 @@ function errorMsg(msg: string): LobbyServerMessage {
         }
     };
 }
-
-

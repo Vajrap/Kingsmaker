@@ -16,11 +16,12 @@ import {
   mainBoxStyle,
 } from '@/theme/styles';
 import { currentTheme } from '@/singleton/currentTheme';
+import { sessionId } from '@/Request-Respond/ws/session';
 
 interface CreateRoomModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreateRoom: (name: string, settings: {
+  onCreateRoom: (sessionId: string, name: string, settings: {
     maxPlayers: 2 | 3 | 4;
     spectatorMode: boolean;
     turnTimeLimit?: number;
@@ -68,8 +69,8 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
     };
 
     setIsLoading(true);
-    onCreateRoom(roomName.trim(), settings);
-    
+    onCreateRoom(sessionId ,roomName.trim(), settings);
+
     setRoomName('');
     setMaxPlayers(4);
     setSpectatorMode(false);
@@ -143,7 +144,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
               value={maxPlayers}
               onChange={(e) => setMaxPlayers(parseInt(e.target.value) as 2 | 3 | 4)}
               style={{
-                width: '100%',  
+                width: '100%',
                 color: currentTheme.textColor,
                 background: currentTheme.panelBackgroundColor,
               }}
@@ -201,7 +202,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
               </Box>
               <input
                 type="checkbox"
-                checked={spectatorMode} 
+                checked={spectatorMode}
                 onChange={(e) => setSpectatorMode(e.target.checked)}
               />
             </Flex>
@@ -229,4 +230,4 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
       </Box>
     </Flex>
   );
-}; 
+};

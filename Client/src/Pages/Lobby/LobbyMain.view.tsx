@@ -1,12 +1,12 @@
 import type { WaitingRoomMetadata } from '@shared/types/types';
-import { 
-  Badge, 
-  Box, 
-  Button, 
-  Flex, 
-  Heading, 
-  Spinner, 
-  Text 
+import {
+  Badge,
+  Box,
+  Button,
+  Flex,
+  Heading,
+  Spinner,
+  Text
 } from '@chakra-ui/react';
 import {
   lobbyHeaderStyle,
@@ -31,6 +31,7 @@ import { RetryModal } from './components/RetryModal';
 import { ProfileModal } from './components/ProfileModal';
 import { SettingsModal } from './components/SettingsModal';
 import { backgroundStyle, buttonStyle, headingStyle, subHeadingStyle, textStyle } from '@/theme/styles';
+import { sessionId } from '@/Request-Respond/ws/session';
 
 export type LobbyMainViewProps = {
   // State
@@ -52,10 +53,10 @@ export type LobbyMainViewProps = {
   onSetShowProfileModal: (show: boolean) => void;
   onSetShowSettingsModal: (show: boolean) => void;
   onHandleLogout: () => void;
-  onHandleRefreshRooms: () => void;
-  onHandleJoinRoom: (roomId: string) => void;
+  onHandleRefreshRooms: (sessionId: string) => void;
+  onHandleJoinRoom: (sessionId: string, roomId: string) => void;
   onRetryConnection: () => void;
-  onCreateRoom: (name: string, maxPlayers: 2 | 3 | 4) => void;
+  onCreateRoom: (sessionId: string, name: string, maxPlayers: 2 | 3 | 4) => void;
 };
 
 export function LobbyMainView({
@@ -118,10 +119,10 @@ export function LobbyMainView({
         </Flex>
       </Flex>
 
-      <Flex {...subHeadingStyle} justifyContent={"space-between"} alignItems={"center"} padding={"1vw"}> 
+      <Flex {...subHeadingStyle} justifyContent={"space-between"} alignItems={"center"} padding={"1vw"}>
         <Heading {...lobbySectionTitleStyle}>Available Rooms</Heading>
         <Flex gap={2}>
-          <Button onClick={onHandleRefreshRooms} {...buttonStyle} w="auto">Refresh</Button>
+          <Button onClick={() => onHandleRefreshRooms(sessionId) } {...buttonStyle} w="auto">Refresh</Button>
           <Button onClick={() => onSetShowCreateModal(true)} {...buttonStyle} w="auto">Create Room</Button>
         </Flex>
       </Flex>
@@ -156,7 +157,7 @@ export function LobbyMainView({
                   </Box>
                   <Box {...lobbyTableCellStyle}>
                     <Button
-                      onClick={() => onHandleJoinRoom(room.id)}
+                      onClick={() => onHandleJoinRoom( sessionId, room.id)}
                       disabled={room.state !== 'WAITING' || room.currentPlayers >= room.maxPlayers}
                       {...lobbyButtonStyle}
                       size="sm"
@@ -171,20 +172,20 @@ export function LobbyMainView({
         </Box>
       )}
 
-      <CreateRoomModal 
-        isOpen={showCreateModal} 
-        onClose={() => onSetShowCreateModal(false)} 
-        onCreateRoom={(name, settings) => onCreateRoom(name, settings.maxPlayers)}
+      <CreateRoomModal
+        isOpen={showCreateModal}
+        onClose={() => onSetShowCreateModal(false)}
+        onCreateRoom={(sessionId, name, settings) => onCreateRoom(sessionId, name, settings.maxPlayers)}
       />
 
-      <ProfileModal 
+      <ProfileModal
         isOpen={showProfileModal}
-        onClose={() => onSetShowProfileModal(false)} 
+        onClose={() => onSetShowProfileModal(false)}
       />
-      
-      <SettingsModal 
-        isOpen={showSettingsModal} 
-        onClose={() => onSetShowSettingsModal(false)} 
+
+      <SettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => onSetShowSettingsModal(false)}
       />
 
       <RetryModal
@@ -195,4 +196,4 @@ export function LobbyMainView({
       />
     </Box>
   );
-} 
+}

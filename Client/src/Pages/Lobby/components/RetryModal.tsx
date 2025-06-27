@@ -21,11 +21,11 @@ interface RetryModalProps {
   isRetrying?: boolean;
 }
 
-export const RetryModal: React.FC<RetryModalProps> = ({ 
-  isOpen, 
+export const RetryModal: React.FC<RetryModalProps> = ({
+  isOpen,
   onClose,
-  onRetry, 
-  isRetrying = false 
+  onRetry,
+  isRetrying = false
 }) => {
   if (!isOpen) return null;
 
@@ -50,7 +50,7 @@ export const RetryModal: React.FC<RetryModalProps> = ({
             Connection Lost
           </Heading>
           <Text color={currentTheme.mutedTextColor} lineHeight="1.5">
-            Your connection to the lobby server has been lost. Would you like to try reconnecting?
+            Your connection to the server has been lost. Would you like to try reconnecting?
           </Text>
         </Box>
 
@@ -60,7 +60,7 @@ export const RetryModal: React.FC<RetryModalProps> = ({
             disabled={isRetrying}
             variant="outline"
             {...buttonStyle}
-            bg="transparent"
+            bg="rgba(0, 0, 0, 0.5)"
             w="auto"
             opacity={isRetrying ? 0.6 : 1}
           >
@@ -83,4 +83,4 @@ export const RetryModal: React.FC<RetryModalProps> = ({
       </Box>
     </Flex>
   );
-}; 
+};

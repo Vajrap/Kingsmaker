@@ -1,11 +1,15 @@
-import { LobbyServerMessage } from '../shared/types/types';
+import { LobbyServerMessage, LobbyClientMessage, SessionData } from '../shared/types/types';
 
-export async function handleGetRoomList(): Promise<LobbyServerMessage> {
-    // Get all waiting rooms
-    // return LobbyServerMessage This must be get from SM service? since it's the central service!
-
+export async function handleGetRoomList(
+    session?: SessionData,
+    msg?: LobbyClientMessage
+): Promise<LobbyServerMessage> {
+    // TODO: This should get rooms from a room state manager (Redis/Database)
+    // For now, return empty room list
+    const rooms = [];
+    
     return {
-        type: "ERROR",
-        data: {message: ""}
-    }
+        type: "ROOM_LIST",
+        data: { rooms }
+    };
 }

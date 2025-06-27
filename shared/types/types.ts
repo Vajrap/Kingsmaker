@@ -26,8 +26,6 @@ export function ok<T>(data: T, message?: string): SuccessResponse<T> {
   };
 }
 
-
-
 export type LoginBody = {
     username: string;
     password: string;
@@ -82,7 +80,6 @@ export type LogoutResponse = {
 };
 
 // Lobby and Room related types
-
 export interface WaitingRoomMetadata {
     id: string;
     name: string;

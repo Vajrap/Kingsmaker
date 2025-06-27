@@ -28,7 +28,7 @@ export const LobbyMainViewModel: React.FC = () => {
   useEffect(() => {
     // Only proceed if we have a session
     if (!session) return;
-
+    console.log(`Session: ${session.sessionId}`);
     const handlers: LobbyEventHandler = {
       onConnected: () => {
         setIsConnected(true);
@@ -36,7 +36,7 @@ export const LobbyMainViewModel: React.FC = () => {
         setShowRetryModal(false);
 
         // Get room list on connection
-        lobbySocket.getRoomList();
+        lobbySocket.getRoomList(session.sessionId);
       },
 
       onDisconnected: () => {
@@ -75,7 +75,7 @@ export const LobbyMainViewModel: React.FC = () => {
 
       onError: (message, code) => {
         console.error("Lobby error:", message, "Code:", code);
-        
+
         // If error is related to room not found, clear stored room
         if (message.includes("Room not found") || message.includes("Failed to join room")) {
           const storedRoomId = sessionStorage.getItem('kingsmaker-currentRoomID');
@@ -106,12 +106,12 @@ export const LobbyMainViewModel: React.FC = () => {
     window.location.href = '/';
   };
 
-  const handleRefreshRooms = () => {
-    lobbySocket.getRoomList();
+  const handleRefreshRooms = (sessionID: string) => {
+    lobbySocket.getRoomList(sessionID);
   };
 
-  const handleJoinRoom = (roomId: string) => {
-    lobbySocket.joinRoom(roomId);
+  const handleJoinRoom = (sessionID: string, roomId: string) => {
+    lobbySocket.joinRoom(sessionID, roomId);
   };
 
   const handleRetryConnection = async () => {
@@ -126,8 +126,8 @@ export const LobbyMainViewModel: React.FC = () => {
     }
   };
 
-  const handleCreateRoom = (name: string, maxPlayers: 2 | 3 | 4) => {
-    lobbySocket.createRoom(name, maxPlayers);
+  const handleCreateRoom = (sessionId: string, name: string, maxPlayers: 2 | 3 | 4) => {
+    lobbySocket.createRoom(sessionId, name, maxPlayers);
     setShowCreateModal(false);
   };
 
@@ -155,4 +155,4 @@ export const LobbyMainViewModel: React.FC = () => {
       onCreateRoom={handleCreateRoom}
     />
   );
-}; 
+};

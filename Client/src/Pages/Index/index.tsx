@@ -32,8 +32,8 @@ export default function LoginPage() {
           return;
         }
       }
-      const lastLogin = sessionManager.getLastLogin();
-      if (lastLogin) setUsername(lastLogin);
+      const lastSession = sessionManager.getSession();
+      if (lastSession?.username) setUsername(lastSession.username);
       setIsCheckingSession(false);
     };
     checkSession();
