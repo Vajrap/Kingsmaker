@@ -104,3 +104,51 @@ export class SessionManagerClient {
 }
 // Export singleton instance
 export const sessionManagerClient = new SessionManagerClient();
+/**
+ * Standard WebSocket session validation for all services
+ * This should be used by all WebSocket handlers to validate sessions consistently
+ */
+export async function validateWSSession(message, getUserIdFromSessionId) {
+    // Check if sessionId exists in message
+    const sessionId = message.data?.sessionId;
+    if (!sessionId) {
+        return {
+            isValid: false,
+            errorMessage: 'MISSING_SESSION_ID'
+        };
+    }
+    try {
+        // Get session data from SessionManager
+        const sessionData = await sessionManagerClient.getSessionBySessionId(sessionId, getUserIdFromSessionId);
+        if (!sessionData) {
+            return {
+                isValid: false,
+                errorMessage: 'INVALID_SESSION'
+            };
+        }
+        return {
+            isValid: true,
+            userId: sessionData.userId,
+            sessionData,
+        };
+    }
+    catch (error) {
+        console.error('Session validation error:', error);
+        return {
+            isValid: false,
+            errorMessage: 'SESSION_VALIDATION_ERROR'
+        };
+    }
+}
+/**
+ * Standard WebSocket error message format
+ */
+export function createWSErrorMessage(type, errorCode, message) {
+    return {
+        type: 'ERROR',
+        data: {
+            code: errorCode,
+            message: message || errorCode
+        }
+    };
+}

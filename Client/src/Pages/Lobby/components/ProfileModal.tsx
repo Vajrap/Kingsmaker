@@ -24,12 +24,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   if (!isOpen) return null;
 
   const session = sessionManager.getSession();
-  
+
   if (!session) {
     return null;
   }
 
-  const formatLoginTime = (timestamp: number) => {
+  const formatLoginTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
@@ -139,7 +139,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             <Box display="flex" flexDirection="column" gap={3}>
               <Flex justify="space-between">
                 <Text color={currentTheme.mutedTextColor}>User ID:</Text>
-                <Text fontFamily="monospace" color={currentTheme.textColor}>{session.userID}</Text>
+                <Text fontFamily="monospace" color={currentTheme.textColor}>{session.username}</Text>
               </Flex>
               <Flex justify="space-between">
                 <Text color={currentTheme.mutedTextColor}>Last Login:</Text>
@@ -178,7 +178,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
               textAlign="center"
               color={currentTheme.mutedTextColor}
             >
-              💡 Game statistics will be tracked once you start playing! 
+              💡 Game statistics will be tracked once you start playing!
             </Box>
           </Box>
 
@@ -210,4 +210,4 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
       </Box>
     </Flex>
   );
-}; 
+};

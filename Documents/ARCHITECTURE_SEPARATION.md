@@ -9,7 +9,6 @@ sessionManager-service (Bun:7007) → Presence tracking, connection management
 lobby-service (Bun:7004) → Room discovery, WebSocket coordination
 waiting-room (Go:7005) → Pre-game rooms, player readiness
 game-service (Go:7003) → Game instances, turn logic
-redis (Redis:7379) → State storage, pub/sub coordination
 postgresql (DB:7432) → Persistent data storage
 ```
 
@@ -26,13 +25,12 @@ sessionManager-service:
   - User presence status tracking  
   - Connection state management
   - Presence transition validation
-  - In-memory session store (no Redis)
+  - In-memory session store
 
 lobby-service:
   - Room listing and discovery
   - Room creation/join coordination  
   - WebSocket room management
-  - Redis room state storage
 
 waiting-room:  
   - Pre-game room validation
@@ -59,7 +57,7 @@ SessionManager Service (In-Memory):
   - Active connection management
   - Session validation for other services
 
-Lobby Service (Redis + SessionManager):
+Lobby Service (SessionManager):
   - Room state: "waitingRooms:<roomId>": WaitingRoomMetadata
   - Session validation via SessionManager HTTP API
   - Room discovery/listing state
@@ -119,44 +117,39 @@ Go Services (waiting-room, game):
   - CPU-intensive game logic
   - Isolated per-instance scaling
 
-Redis:
-  - Central state coordinator
-  - TTL-based automatic cleanup
-  - Pub/sub for decoupled communication
-  - Single source of truth
 ```
 
 ## Service Dependencies
 ```
 auth-service → postgresql, sessionManager-service
 sessionManager-service → postgresql (user validation)
-lobby-service → redis (room state), sessionManager-service (session validation)
-waiting-room → redis (room/player state), sessionManager-service (session validation)
-game-service → redis (game state), sessionManager-service (session validation)
+lobby-service → (room state), sessionManager-service (session validation)
+waiting-room → (room/player state), sessionManager-service (session validation)
+game-service → (game state), sessionManager-service (session validation)
 
 Authority Flow:
 auth → sessionManager (presence tracking)
 {lobby, waiting-room, game} → sessionManager (presence validation)
-{lobby, waiting-room, game} ↔ redis (state storage/pub-sub)
+{lobby, waiting-room, game} ↔ (state storage/pub-sub)
 ```
 
 ## Deployment Architecture
 ```yaml
 # Docker Compose Structure
 services:
-  redis: [Redis 7 Alpine]
   db: [PostgreSQL 15]
-  auth: [Bun service, depends_on: redis, db]
-  lobby: [Bun service, depends_on: redis]  
-  waiting-room: [Go service, depends_on: redis]
-  game: [Go service, depends_on: redis]
+  auth: [Bun service, depends_on: db]
+  lobby: [Bun service, depends_on: sessionManager]  
+  waiting-room: [Go service, depends_on: sessionManager]
+  game: [Go service, depends_on: sessionManager]
+  sessionManager: [Bun service]
 ```
 
 ## Scaling Strategy
 ```
 Horizontal Scaling:
 - auth-service: Stateless, scale via load balancer
-- lobby-service: Redis-backed state, scale with sticky sessions
+- lobby-service: sessionManager-backed state, scale with sticky sessions
 
 Vertical Scaling:  
 - waiting-room: Per-room Go routines

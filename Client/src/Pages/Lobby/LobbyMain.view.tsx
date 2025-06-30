@@ -1,4 +1,4 @@
-import type { WaitingRoomMetadata } from '@shared/types/types';
+import type { GameRoom } from '@shared/types/types';
 import {
   Badge,
   Box,
@@ -35,8 +35,8 @@ import { sessionId } from '@/Request-Respond/ws/session';
 
 export type LobbyMainViewProps = {
   // State
-  rooms: WaitingRoomMetadata[];
-  currentRoom: WaitingRoomMetadata | null;
+  rooms: GameRoom[];
+  currentRoom: GameRoom | null;
   isConnected: boolean;
   isLoading: boolean;
   showCreateModal: boolean;
@@ -56,7 +56,14 @@ export type LobbyMainViewProps = {
   onHandleRefreshRooms: (sessionId: string) => void;
   onHandleJoinRoom: (sessionId: string, roomId: string) => void;
   onRetryConnection: () => void;
-  onCreateRoom: (sessionId: string, name: string, maxPlayers: 2 | 3 | 4) => void;
+  onCreateRoom: (sessionId: string, settings: {
+    roomName: string;
+    maxPlayers: 2 | 3 | 4;
+    turnTimeLimit: number;
+    allowSpectators: boolean;
+    allowAnonymousSpectators: boolean;
+    mapSeed: string;
+  }) => void;
 };
 
 export function LobbyMainView({
@@ -96,7 +103,7 @@ export function LobbyMainView({
     return (
       <div style={{ padding: '20px', textAlign: 'center' }}>
         <h2>Room: {currentRoom.name}</h2>
-        <p>Players: {currentRoom.currentPlayers}/{currentRoom.maxPlayers}</p>
+        <p>Players: {currentRoom.players.length}/{currentRoom.maxPlayers}</p>
         <p>Status: {currentRoom.state}</p>
         <button onClick={() => window.location.reload()}>Back to Lobby</button>
         <p><em>Room view will be implemented with waiting room service</em></p>
@@ -148,7 +155,7 @@ export function LobbyMainView({
                     <Text {...lobbyTableSubTextStyle}>ID: {room.id}</Text>
                   </Box>
                   <Box {...lobbyTableCellStyle}>
-                    <Text {...lobbyTableTextStyle}>{room.currentPlayers}/{room.maxPlayers}</Text>
+                    <Text {...lobbyTableTextStyle}>{room.players.length}/{room.maxPlayers}</Text>
                   </Box>
                   <Box {...lobbyTableCellStyle}>
                     <Badge colorScheme={room.state === 'WAITING' ? 'green' : room.state === 'STARTING' ? 'orange' : 'red'}>
@@ -158,7 +165,7 @@ export function LobbyMainView({
                   <Box {...lobbyTableCellStyle}>
                     <Button
                       onClick={() => onHandleJoinRoom( sessionId, room.id)}
-                      disabled={room.state !== 'WAITING' || room.currentPlayers >= room.maxPlayers}
+                      disabled={room.state !== 'WAITING' || room.players.length >= room.maxPlayers}
                       {...lobbyButtonStyle}
                       size="sm"
                     >
@@ -175,7 +182,7 @@ export function LobbyMainView({
       <CreateRoomModal
         isOpen={showCreateModal}
         onClose={() => onSetShowCreateModal(false)}
-        onCreateRoom={(sessionId, name, settings) => onCreateRoom(sessionId, name, settings.maxPlayers)}
+        onCreateRoom={onCreateRoom}
       />
 
       <ProfileModal

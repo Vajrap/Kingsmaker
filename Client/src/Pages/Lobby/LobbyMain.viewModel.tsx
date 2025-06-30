@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import type { WaitingRoomMetadata } from '@shared/types/types';
+import type { GameRoom } from '@shared/types/types';
 import { lobbySocket, type LobbyEventHandler } from '@/Request-Respond/ws/lobbySocket';
 import { sessionManager } from '@/singleton/sessionManager';
 import { LobbyMainView } from './LobbyMain.view';
 
 export const LobbyMainViewModel: React.FC = () => {
-  const [rooms, setRooms] = useState<WaitingRoomMetadata[]>([]);
-  const [currentRoom, setCurrentRoom] = useState<WaitingRoomMetadata | null>(null);
+  const [rooms, setRooms] = useState<GameRoom[]>([]);
+  const [currentRoom, setCurrentRoom] = useState<GameRoom | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -34,9 +34,6 @@ export const LobbyMainViewModel: React.FC = () => {
         setIsConnected(true);
         setIsLoading(false);
         setShowRetryModal(false);
-
-        // Get room list on connection
-        lobbySocket.getRoomList(session.sessionId);
       },
 
       onDisconnected: () => {
@@ -49,10 +46,10 @@ export const LobbyMainViewModel: React.FC = () => {
         setRooms(roomList);
       },
 
-      onRoomCreated: (room) => {
-        setCurrentRoom(room);
-        sessionStorage.setItem('kingsmaker-currentRoomID', room.id);
-        console.log(`Room "${room.name}" created successfully`);
+      onRoomCreated: (roomId) => {
+        sessionStorage.setItem('kingsmaker-currentRoomID', roomId);
+        console.log(`Room created successfully with ID: ${roomId}`);
+        // TODO: Navigate to the room page or fetch room details
       },
 
       onRoomJoined: (roomId, success) => {
@@ -126,8 +123,18 @@ export const LobbyMainViewModel: React.FC = () => {
     }
   };
 
-  const handleCreateRoom = (sessionId: string, name: string, maxPlayers: 2 | 3 | 4) => {
-    lobbySocket.createRoom(sessionId, name, maxPlayers);
+  const handleCreateRoom = (
+    sessionId: string,
+    settings: {
+      roomName: string;
+      maxPlayers: 2 | 3 | 4;
+      turnTimeLimit: number;
+      allowSpectators: boolean;
+      allowAnonymousSpectators: boolean;
+      mapSeed: string;
+    }
+  ) => {
+    lobbySocket.createRoom(sessionId, settings);
     setShowCreateModal(false);
   };
 

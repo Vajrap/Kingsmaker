@@ -10,4 +10,16 @@ export * from './utils/jsonPost';
 export type { User } from './prisma/generated';
 
 // export * from './utils/email';
-// export * from './utils/validation'; 
+// export * from './utils/validation';
+
+// Session management exports
+export { sessionManagerClient } from './session/sessionManagerClient';
+export type { SessionData } from './types/types';
+
+// WebSocket validation utilities
+export { 
+    validateWSSession, 
+    createWSErrorMessage,
+    type WSMessage,
+    type WSValidationResult 
+} from './session/sessionManagerClient'; 

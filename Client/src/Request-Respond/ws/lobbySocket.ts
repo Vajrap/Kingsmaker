@@ -1,16 +1,17 @@
 import type {
     LobbyClientMessage,
     LobbyServerMessage,
-    WaitingRoomMetadata,
+    GameRoom,
 } from "@shared/types/types";
+import { sessionManager } from "@/singleton/sessionManager";
 
 export type LobbyEventHandler = {
-    onRoomCreated?: (room: WaitingRoomMetadata) => void;
+    onRoomCreated?: (roomId: string) => void;
     onRoomJoined?: (roomId: string, success: boolean) => void;
     onRoomLeft?: (roomId: string) => void;
-    onRoomList?: (rooms: WaitingRoomMetadata[]) => void;
+    onRoomList?: (rooms: GameRoom[]) => void;
     onLobbyUpdate?: (
-        rooms: WaitingRoomMetadata[],
+        rooms: GameRoom[],
         onlinePlayers: number,
     ) => void;
     onError?: (message: string, code: string) => void;
@@ -57,22 +58,54 @@ class LobbySocket {
             this.ws.onopen = () => {
                 console.log("Lobby WebSocket connected");
                 this.isConnected = true;
-                // Connection success will be handled in onmessage
+
+                // Send initial message immediately to break the deadlock
+                const session = sessionManager.getSession();
+                if (session) {
+                    console.log("Sending initial GET_ROOM_LIST message");
+                    this.sendMessage({
+                        type: "GET_ROOM_LIST",
+                        data: { sessionId: session.sessionId },
+                    });
+                } else {
+                    console.error("No session found for WebSocket connection");
+                    reject(new Error("No session available"));
+                }
             };
 
             this.ws.onmessage = (event) => {
                 try {
                     const message: LobbyServerMessage = JSON.parse(event.data);
 
-                    // Handle connection success - lobby service doesn't require separate auth
+                    // Handle authentication based on first message response
                     if (!this.isAuthenticated) {
-                        console.log("Lobby WebSocket connected successfully");
-                        this.isAuthenticated = true;
-                        this.isConnecting = false;
-                        this.handlers.onConnected?.();
-                        if (!isResolved) {
-                            isResolved = true;
-                            resolve();
+                        if (message.type === "ERROR") {
+                            console.error(
+                                "Authentication failed:",
+                                message.data,
+                            );
+                            this.isConnecting = false;
+                            if (!isResolved) {
+                                isResolved = true;
+                                reject(
+                                    new Error(
+                                        `Authentication failed: ${message.data.message}`,
+                                    ),
+                                );
+                            }
+                            return;
+                        } else {
+                            // Any non-error message means authentication succeeded
+                            console.log(
+                                "Lobby WebSocket authenticated successfully",
+                            );
+                            this.isAuthenticated = true;
+                            this.isConnecting = false;
+                            this.handlers.onConnected?.();
+                            if (!isResolved) {
+                                isResolved = true;
+                                resolve();
+                            }
                         }
                     }
 
@@ -143,7 +176,7 @@ class LobbySocket {
                 this.handlers.onRoomList?.(message.data.rooms);
                 break;
             case "ROOM_CREATED":
-                this.handlers.onRoomCreated?.(message.data.room);
+                this.handlers.onRoomCreated?.(message.data.roomId);
                 break;
             case "ROOM_JOINED":
                 this.handlers.onRoomJoined?.(
@@ -160,13 +193,14 @@ class LobbySocket {
             case "ERROR":
                 this.handlers.onError?.(
                     message.data.message,
-                    message.data.message,
+                    message.data.code,
                 );
                 break;
         }
     }
 
-    private send(message: LobbyClientMessage) {
+    // Internal method for sending messages without authentication check
+    private sendMessage(message: LobbyClientMessage) {
         if (
             this.ws &&
             this.isConnected &&
@@ -175,31 +209,54 @@ class LobbySocket {
             console.log("Sending message:", message);
             this.ws.send(JSON.stringify(message));
         } else {
-            console.warn(
-                "Cannot send message: WebSocket not connected or authenticated",
-            );
+            console.warn("Cannot send message: WebSocket not connected");
         }
     }
 
-    // Lobby actions - updated for new lobby service API
-    createRoom(sessionId: string, name: string, maxPlayers: 2 | 3 | 4) {
+    // Public method for sending messages (requires authentication)
+    private send(message: LobbyClientMessage) {
         if (!this.isAuthenticated) {
-            console.warn("Cannot create room: not authenticated");
+            console.warn("Cannot send message: not authenticated");
             return;
         }
+        this.sendMessage(message);
+    }
+
+    // Lobby actions - updated for new lobby service API
+    createRoom(
+        sessionId: string,
+        settings: {
+            roomName: string;
+            maxPlayers: 2 | 3 | 4;
+            turnTimeLimit: number;
+            allowSpectators: boolean;
+            allowAnonymousSpectators: boolean;
+            mapSeed: string;
+        },
+    ) {
+        const gameRoom: GameRoom = {
+            id: "", // Will be set by room service
+            name: settings.roomName,
+            state: "WAITING",
+            players: [], // Host will be added by room service
+            maxPlayers: settings.maxPlayers,
+            turnTimeLimit: settings.turnTimeLimit,
+            allowSpectators: settings.allowSpectators,
+            allowAnonymousSpectators: settings.allowAnonymousSpectators,
+            spectators: [],
+            mapSeed: settings.mapSeed,
+        };
 
         this.send({
             type: "CREATE_ROOM",
-            data: { sessionId, name, maxPlayers },
+            data: {
+                sessionId: sessionId,
+                data: gameRoom,
+            },
         });
     }
 
     joinRoom(sessionId: string, roomId: string) {
-        if (!this.isAuthenticated) {
-            console.warn("Cannot join room: not authenticated");
-            return;
-        }
-
         this.send({
             type: "JOIN_ROOM",
             data: { sessionId, roomId },
@@ -207,11 +264,6 @@ class LobbySocket {
     }
 
     getRoomList(sessionId: string) {
-        if (!this.isAuthenticated) {
-            console.warn("Cannot get room list: not authenticated");
-            return;
-        }
-
         this.send({
             type: "GET_ROOM_LIST",
             data: { sessionId },
