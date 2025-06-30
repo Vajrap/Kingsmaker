@@ -2,7 +2,6 @@ import { sessionManagerClient } from "../shared/session/sessionManagerClient";
 import { prisma } from "../shared/prisma/prisma";
 import type { SessionData } from "../shared/types/types";
 
-// Helper function to get userId from sessionId (required by shared client)
 async function getUserIdFromSessionId(sessionId: string): Promise<number | null> {
   const user = await prisma.user.findFirst({ 
     where: { sessionId },
@@ -11,7 +10,6 @@ async function getUserIdFromSessionId(sessionId: string): Promise<number | null>
   return user?.id || null;
 }
 
-// Lobby-specific SessionManager functions
 export async function getSession(sessionId: string): Promise<SessionData | null> {
   return sessionManagerClient.getSessionBySessionId(sessionId, getUserIdFromSessionId);
 }

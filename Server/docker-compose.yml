@@ -71,6 +71,7 @@ services:
         environment:
             DATABASE_URL: postgresql://postgres:postgres@db:5432/kingsmaker
             SESSION_MANAGER_URL: http://sessionmanager:3000
+            WAITING_ROOM_URL: http://waitingRoom:3000
 
     waitingroom:
         build:
@@ -81,12 +82,10 @@ services:
             - "7005:3000"
         depends_on:
             - db
+            - sessionmanager
         environment:
-            DATABASE_HOST: db
-            DATABASE_USER: postgres
-            DATABASE_PASSWORD: postgres
-            DATABASE_NAME: kingsmaker
-            DATABASE_PORT: 5432
+            DATABASE_URL: postgresql://postgres:postgres@db:5432/kingsmaker
+            SESSION_MANAGER_URL: http://sessionmanager:3000
 
     store:
         build:

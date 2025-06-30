@@ -30,7 +30,7 @@ export async function handleOpen(session: SessionData):Promise<LobbyServerMessag
         default: break;
     }
     
-    updatePresenceInSessionManager(session.sessionId, 'IN_LOBBY');
+    updatePresenceInSessionManager(session.userId, 'IN_LOBBY');
 
     const roomList = await handleGetRoomList();
     return roomList;
