@@ -43,7 +43,7 @@ export class RoomInstance implements GameRoom {
     }
 
     async checkPresence() {
-        for (const player of this.players) {
+        const checks = this.players.map(async (player) => {
             try {
                 const res = await fetch(
                     `http://sessionManager:3000/user/${player.userId}`,
@@ -51,11 +51,12 @@ export class RoomInstance implements GameRoom {
                 const session = (await res.json()) as SessionResponse;
 
                 if (session.status === "success" && session.data) {
-                    if (session.data.presenceStatus != "IN_WAITING_ROOM") {
+                    if (session.data.presenceStatus !== "IN_WAITING_ROOM") {
                         this.removePlayer(player);
                     }
                 } else {
                     console.warn(`User ${player.userId} is offline or invalid`);
+                    this.removePlayer(player);
                 }
             } catch (err) {
                 console.error(
@@ -63,7 +64,9 @@ export class RoomInstance implements GameRoom {
                     err,
                 );
             }
-        }
+        });
+
+        await Promise.all(checks);
     }
 
     addPlayer(player: Player) {

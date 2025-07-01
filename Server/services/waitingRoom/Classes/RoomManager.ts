@@ -9,10 +9,24 @@ import type {
 import { prisma } from "../shared/prisma/prisma";
 import { RoomInstance } from "./RoomInstance";
 
+const ROOM_CHECK_INTERVAL = 5000;
+
 class RoomManager {
     rooms: Map<string, RoomInstance>;
     constructor() {
         this.rooms = new Map();
+        this.checkAllPresences();
+    }
+
+    checkAllPresences() {
+        setInterval(async () => {
+            for (const [roomId, room] of this.rooms.entries()) {
+                await room.checkPresence();
+                if (room.isEmpty()) {
+                    this.rooms.delete(roomId);
+                }
+            }
+        }, ROOM_CHECK_INTERVAL);
     }
 
     async createNewRoom(
