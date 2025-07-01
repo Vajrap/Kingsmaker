@@ -32,6 +32,7 @@ import { ProfileModal } from './components/ProfileModal';
 import { SettingsModal } from './components/SettingsModal';
 import { backgroundStyle, buttonStyle, headingStyle, subHeadingStyle, textStyle } from '@/theme/styles';
 import { sessionId } from '@/Request-Respond/ws/session';
+import React from 'react';
 
 export type LobbyMainViewProps = {
   // State
@@ -149,30 +150,32 @@ export function LobbyMainView({
             </Box>
             <Box as="tbody">
               {rooms.map(room => (
-                <Box {...lobbyTableRowStyle} key={room.id}>
-                  <Box {...lobbyTableCellStyle}>
-                    <Text {...lobbyTableTextStyle}>{room.name}</Text>
-                    <Text {...lobbyTableSubTextStyle}>ID: {room.id}</Text>
+                <React.Fragment key={room.id}>
+                  <Box {...lobbyTableRowStyle} key={room.id}>
+                    <Box {...lobbyTableCellStyle}>
+                      <Text {...lobbyTableTextStyle}>{room.name}</Text>
+                      <Text {...lobbyTableSubTextStyle}>ID: {room.id}</Text>
+                    </Box>
+                    <Box {...lobbyTableCellStyle}>
+                      <Text {...lobbyTableTextStyle}>{room.players.length}/{room.maxPlayers}</Text>
+                    </Box>
+                    <Box {...lobbyTableCellStyle}>
+                      <Badge colorScheme={room.state === 'WAITING' ? 'green' : room.state === 'STARTING' ? 'orange' : 'red'}>
+                        {room.state}
+                      </Badge>
+                    </Box>
+                    <Box {...lobbyTableCellStyle}>
+                      <Button
+                        onClick={() => onHandleJoinRoom( sessionId, room.id)}
+                        disabled={room.state !== 'WAITING' || room.players.length >= room.maxPlayers}
+                        {...lobbyButtonStyle}
+                        size="sm"
+                      >
+                        Join
+                      </Button>
+                    </Box>
                   </Box>
-                  <Box {...lobbyTableCellStyle}>
-                    <Text {...lobbyTableTextStyle}>{room.players.length}/{room.maxPlayers}</Text>
-                  </Box>
-                  <Box {...lobbyTableCellStyle}>
-                    <Badge colorScheme={room.state === 'WAITING' ? 'green' : room.state === 'STARTING' ? 'orange' : 'red'}>
-                      {room.state}
-                    </Badge>
-                  </Box>
-                  <Box {...lobbyTableCellStyle}>
-                    <Button
-                      onClick={() => onHandleJoinRoom( sessionId, room.id)}
-                      disabled={room.state !== 'WAITING' || room.players.length >= room.maxPlayers}
-                      {...lobbyButtonStyle}
-                      size="sm"
-                    >
-                      Join
-                    </Button>
-                  </Box>
-                </Box>
+                </React.Fragment>
               ))}
             </Box>
           </Box>

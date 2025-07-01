@@ -1,4 +1,5 @@
 import type { SessionData, Player, GameRoom } from "../shared/types/types";
+import { v4 as uuidv4 } from "uuid";
 
 interface SessionResponse {
     status: "success" | "error";
@@ -19,7 +20,8 @@ export class RoomInstance implements GameRoom {
     createdAt: string;
 
     constructor(data: GameRoom) {
-        this.id = data.id;
+        const id = uuidv4();
+        this.id = id;
         this.name = data.name;
         this.state = data.state;
         this.players = data.players;
@@ -30,6 +32,8 @@ export class RoomInstance implements GameRoom {
         this.allowAnonymousSpectators = data.allowAnonymousSpectators;
         this.mapSeed = data.mapSeed;
         this.createdAt = Date.now().toString();
+
+        console.log(`New Room Id: ${id}`);
     }
 
     isFull(): boolean {

@@ -31,6 +31,10 @@ interface CreateRoomModalProps {
   }) => void;
 }
 
+enum MapPreset {
+  DEFAULT = 'default',
+}
+
 export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   isOpen,
   onClose,
@@ -41,6 +45,8 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   const [spectatorMode, setSpectatorMode] = useState(false);
   const [allowAnonymousSpectators, setAllowAnonymousSpectators] = useState(false);
   const [turnTimeLimit, setTurnTimeLimit] = useState<number>(300);
+  const [useRandomMap, setUseRandomMap] = useState(false);
+  const [mapPreset, setMapPreset] = useState<MapPreset | string> (MapPreset.DEFAULT)
   const [mapSeed, setMapSeed] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -49,33 +55,44 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   const handleSubmit = () => {
     const newErrors: { [key: string]: string } = {};
 
-    if (!roomName.trim()) {
+    const trimmedRoomName = roomName.trim();
+    let finalSeed = mapSeed.trim();
+
+    if (!trimmedRoomName) {
       newErrors.roomName = 'Room name is required';
-    } else if (roomName.trim().length < 3) {
+    } else if (trimmedRoomName.length < 3) {
       newErrors.roomName = 'Room name must be at least 3 characters';
-    } else if (roomName.trim().length > 30) {
+    } else if (trimmedRoomName.length > 30) {
       newErrors.roomName = 'Room name must be less than 30 characters';
     }
 
-    if (!mapSeed.trim()) {
-      newErrors.mapSeed = 'Map seed is required';
-    } else if (mapSeed.trim().length < 3) {
-      newErrors.mapSeed = 'Map seed must be at least 3 characters';
+    if (!useRandomMap) {
+      finalSeed = mapPreset;
+    } else {
+      if (!finalSeed) {
+        finalSeed = Math.random().toString(36).substring(2, 15);
+      }
+      if (!finalSeed.trim()) {
+        newErrors.mapSeed = 'Map seed is required';
+      } else if (finalSeed.trim().length < 3) {
+        newErrors.mapSeed = 'Map seed must be at least 3 characters';
+      }
     }
 
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length > 0) {
-      return;
+        console.log(newErrors);
+        return;
     }
 
     const settings = {
-      roomName: roomName.trim(),
-      maxPlayers,
-      turnTimeLimit,
-      allowSpectators: spectatorMode,
-      allowAnonymousSpectators,
-      mapSeed: mapSeed.trim(),
+        roomName: trimmedRoomName,
+        maxPlayers,
+        turnTimeLimit,
+        allowSpectators: spectatorMode,
+        allowAnonymousSpectators,
+        mapSeed: finalSeed,
     };
 
     setIsLoading(true);
@@ -185,21 +202,46 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
           </Box>
 
           <Box>
-            <Text {...textStyle} mb={2}>Map Seed</Text>
-            <Input
-              placeholder="Enter map seed (e.g., random123)"
-              value={mapSeed}
-              onChange={(e) => setMapSeed(e.target.value)}
-              maxLength={50}
-              {...inputStyle}
-            />
-            {errors.mapSeed && (
-              <Text {...warningStyle} mt={1}>{errors.mapSeed}</Text>
-            )}
-            <Text fontSize="sm" opacity={0.7} mt={1}>
-              A unique identifier that determines the map layout
-            </Text>
+            <Flex justify="space-between" align="center">
+              <Text {...textStyle}>Use Random Map</Text>
+              <input
+                type="checkbox"
+                checked={useRandomMap}
+                onChange={(e) => setUseRandomMap(e.target.checked)}
+              />
+            </Flex>
           </Box>
+
+          {useRandomMap ? (
+            <Box>
+              <Text {...textStyle} mb={2}>Random Map Seed (optional)</Text>
+              <Input
+                placeholder="Leave empty to auto-generate"
+                value={mapSeed}
+                onChange={(e) => setMapSeed(e.target.value)}
+                maxLength={50}
+                {...inputStyle}
+              />
+            </Box>
+          ) : (
+            <Box>
+              <Text {...textStyle} mb={2}>Select a Predefined Map</Text>
+              <select
+                value={mapPreset}
+                onChange={(e) => setMapPreset(e.target.value)}
+                style={{
+                  width: '100%',
+                  color: currentTheme.textColor,
+                  background: currentTheme.panelBackgroundColor,
+                }}
+              >
+                <option value="default">Default Map</option>
+                <option value="mountain-pass">Mountain Pass</option>
+                <option value="islands">Islands</option>
+                {/* Add more as needed */}
+              </select>
+            </Box>
+          )}
 
           <Box>
             <Flex justify="space-between" align="start">

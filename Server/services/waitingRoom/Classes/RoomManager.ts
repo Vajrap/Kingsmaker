@@ -1,6 +1,11 @@
 import { v4 as uuidv4 } from "uuid";
 import { errorRes, ok } from "../shared/types/types";
-import type { ApiResponse, RoomCreatedEvent, GameRoom, Player } from "../shared/types/types";
+import type {
+    ApiResponse,
+    RoomCreatedEvent,
+    GameRoom,
+    Player,
+} from "../shared/types/types";
 import { prisma } from "../shared/prisma/prisma";
 import { RoomInstance } from "./RoomInstance";
 
@@ -10,7 +15,10 @@ class RoomManager {
         this.rooms = new Map();
     }
 
-    async createNewRoom(data: GameRoom, hostSessionId?: string): Promise<ApiResponse<RoomCreatedEvent>> {
+    async createNewRoom(
+        data: GameRoom,
+        hostSessionId?: string,
+    ): Promise<ApiResponse<RoomCreatedEvent>> {
         let newRoomId = uuidv4();
         // Make 5 attempts at most
         let attempts = 0;
@@ -28,12 +36,21 @@ class RoomManager {
 
         // If hostSessionId is provided, add the host as the first player
         if (hostSessionId) {
-            const hostAdded = await this.addPlayerToRoom(newRoomId, hostSessionId);
+            const hostAdded = await this.addPlayerToRoom(
+                newRoomId,
+                hostSessionId,
+            );
             if (!hostAdded) {
-                console.warn(`Failed to add host to room ${newRoomId}, but room was created`);
+                console.warn(
+                    `Failed to add host to room ${newRoomId}, but room was created`,
+                );
             }
         }
 
+        console.log(`All Room`);
+        for (const [id, room] of this.rooms) {
+            console.log(`${id}: ${room.players.length}/${room.maxPlayers}`);
+        }
         return ok<RoomCreatedEvent>({ roomId: newRoomId });
     }
 
@@ -76,18 +93,24 @@ class RoomManager {
                     username: true,
                     type: true,
                     nameAlias: true,
-                }
+                },
             });
 
             if (!user) {
-                console.error(`User with sessionId ${playerSessionId} not found`);
+                console.error(
+                    `User with sessionId ${playerSessionId} not found`,
+                );
                 return false;
             }
 
             // Check if player is already in the room
-            const existingPlayer = room.players.find(p => p.userId === user.id.toString());
+            const existingPlayer = room.players.find(
+                (p) => p.userId === user.id.toString(),
+            );
             if (existingPlayer) {
-                console.log(`Player ${user.username} is already in room ${roomId}`);
+                console.log(
+                    `Player ${user.username} is already in room ${roomId}`,
+                );
                 return true;
             }
 
@@ -111,15 +134,16 @@ class RoomManager {
             // Update user's presence status to IN_WAITING_ROOM
             await prisma.user.update({
                 where: { id: user.id },
-                data: { 
+                data: {
                     // You might want to add a presenceStatus field to track where the user is
-                    // presenceStatus: "IN_WAITING_ROOM" 
-                }
+                    // presenceStatus: "IN_WAITING_ROOM"
+                },
             });
 
-            console.log(`Player ${user.username} successfully added to room ${roomId}`);
+            console.log(
+                `Player ${user.username} successfully added to room ${roomId}`,
+            );
             return true;
-
         } catch (error) {
             console.error(`Error adding player to room ${roomId}:`, error);
             return false;
