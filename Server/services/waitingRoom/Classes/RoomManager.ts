@@ -47,11 +47,7 @@ class RoomManager {
             }
         }
 
-        console.log(`All Room`);
-        for (const [id, room] of this.rooms) {
-            console.log(`${id}: ${room.players.length}/${room.maxPlayers}`);
-        }
-        return ok<RoomCreatedEvent>({ roomId: newRoomId });
+        return ok<RoomCreatedEvent>({ room: newRoom });
     }
 
     getAllRooms(): GameRoom[] {
@@ -65,7 +61,6 @@ class RoomManager {
             allowSpectators: room.allowSpectators,
             allowAnonymousSpectators: room.allowAnonymousSpectators,
             spectators: room.spectators,
-            mapSeed: room.mapSeed,
         }));
     }
 

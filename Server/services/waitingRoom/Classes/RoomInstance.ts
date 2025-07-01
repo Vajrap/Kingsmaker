@@ -16,7 +16,6 @@ export class RoomInstance implements GameRoom {
     spectators: Player[];
     allowSpectators: boolean;
     allowAnonymousSpectators: boolean;
-    mapSeed: string;
     createdAt: string;
 
     constructor(data: GameRoom) {
@@ -30,7 +29,6 @@ export class RoomInstance implements GameRoom {
         this.spectators = data.spectators;
         this.allowSpectators = data.allowSpectators;
         this.allowAnonymousSpectators = data.allowAnonymousSpectators;
-        this.mapSeed = data.mapSeed;
         this.createdAt = Date.now().toString();
 
         console.log(`New Room Id: ${id}`);

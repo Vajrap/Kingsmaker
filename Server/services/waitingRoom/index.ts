@@ -31,64 +31,70 @@ new Elysia()
     // REST API endpoints for lobby service
     .post("/createRoom", async ({ body }: { body: CreateRoomRequest }) => {
         console.log("Creating room with data:", body);
-        
+
         try {
-            const result = await roomManager.createNewRoom(body.gameRoomData, body.hostSessionId);
-            
+            const result = await roomManager.createNewRoom(
+                body.gameRoomData,
+                body.hostSessionId,
+            );
+
             if (!result.success) {
                 return {
                     status: "error",
                     data: null,
-                    message: result.message
+                    message: result.message,
                 };
             }
 
             return {
                 status: "success",
-                data: { roomId: result.data.roomId }
+                data: { roomId: result.data.room },
             };
         } catch (error) {
             console.error("Error creating room:", error);
             return {
                 status: "error",
                 data: null,
-                message: "Failed to create room"
+                message: "Failed to create room",
             };
         }
     })
     .get("/getRoomList", async () => {
         console.log("Getting room list");
-        
+
         try {
             const rooms = roomManager.getAllRooms();
             return {
                 status: "success",
-                data: { rooms }
+                data: { rooms },
             };
         } catch (error) {
             console.error("Error getting room list:", error);
             return {
                 status: "error",
                 data: null,
-                message: "Failed to get room list"
+                message: "Failed to get room list",
             };
         }
     })
     .post("/joinRoom", async ({ body }: { body: JoinRoomRequest }) => {
         console.log("Joining room:", body);
-        
+
         try {
-            const success = await roomManager.addPlayerToRoom(body.roomId, body.playerSessionId);
+            const success = await roomManager.addPlayerToRoom(
+                body.roomId,
+                body.playerSessionId,
+            );
             return {
                 status: "success",
-                data: { success }
+                data: { success },
             };
         } catch (error) {
             console.error("Error joining room:", error);
             return {
                 status: "error",
                 data: null,
-                message: "Failed to join room"
+                message: "Failed to join room",
             };
         }
     })
@@ -98,55 +104,63 @@ new Elysia()
             type: t.String(),
             data: t.Object({
                 sessionId: t.String(),
-                roomId: t.String()
-            })
+                roomId: t.String(),
+            }),
         }),
         async message(ws, msg: RoomWSMessage) {
             const { sessionId, roomId } = msg.data;
-            
+
             switch (msg.type) {
                 case "GET_ROOM_DATA": {
                     const room = roomManager.getRoom(roomId);
                     if (!room) {
-                        return ws.send(JSON.stringify({
-                            type: "ERROR",
-                            data: { message: "Room not found" }
-                        }));
+                        return ws.send(
+                            JSON.stringify({
+                                type: "ERROR",
+                                data: { message: "Room not found" },
+                            }),
+                        );
                     }
 
-                    const player = room.players.find(p => p.userId === sessionId);
+                    const player = room.players.find(
+                        (p) => p.userId === sessionId,
+                    );
                     if (!player) {
-                        return ws.send(JSON.stringify({
-                            type: "ERROR", 
-                            data: { message: "Not in room" }
-                        }));
+                        return ws.send(
+                            JSON.stringify({
+                                type: "ERROR",
+                                data: { message: "Not in room" },
+                            }),
+                        );
                     }
 
                     const isHost = room.players[0]?.userId === sessionId;
-                    
-                    ws.send(JSON.stringify({
-                        type: "ROOM_DATA",
-                        data: {
-                            room: {
-                                id: room.id,
-                                name: room.name,
-                                state: room.state,
-                                players: room.players,
-                                maxPlayers: room.maxPlayers,
-                                turnTimeLimit: room.turnTimeLimit,
-                                allowSpectators: room.allowSpectators,
-                                allowAnonymousSpectators: room.allowAnonymousSpectators,
-                                spectators: room.spectators,
-                                mapSeed: room.mapSeed
+
+                    ws.send(
+                        JSON.stringify({
+                            type: "ROOM_DATA",
+                            data: {
+                                room: {
+                                    id: room.id,
+                                    name: room.name,
+                                    state: room.state,
+                                    players: room.players,
+                                    maxPlayers: room.maxPlayers,
+                                    turnTimeLimit: room.turnTimeLimit,
+                                    allowSpectators: room.allowSpectators,
+                                    allowAnonymousSpectators:
+                                        room.allowAnonymousSpectators,
+                                    spectators: room.spectators,
+                                },
+                                playerRole: isHost ? "host" : "player",
                             },
-                            playerRole: isHost ? "host" : "player"
-                        }
-                    }));
+                        }),
+                    );
                     break;
                 }
                 // Add more message types as needed
             }
-        }
+        },
     })
     .listen(PORT);
 
