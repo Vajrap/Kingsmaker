@@ -27,7 +27,6 @@ interface CreateRoomModalProps {
     turnTimeLimit: number;
     allowSpectators: boolean;
     allowAnonymousSpectators: boolean;
-    mapSeed: string;
   }) => void;
 }
 

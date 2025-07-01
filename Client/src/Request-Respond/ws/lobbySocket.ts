@@ -10,10 +10,7 @@ export type LobbyEventHandler = {
     onRoomJoined?: (roomId: string, success: boolean) => void;
     onRoomLeft?: (roomId: string) => void;
     onRoomList?: (rooms: GameRoom[]) => void;
-    onLobbyUpdate?: (
-        rooms: GameRoom[],
-        onlinePlayers: number,
-    ) => void;
+    onLobbyUpdate?: (rooms: GameRoom[], onlinePlayers: number) => void;
     onError?: (message: string, code: string) => void;
     onConnected?: () => void;
     onDisconnected?: () => void;
@@ -231,7 +228,6 @@ class LobbySocket {
             turnTimeLimit: number;
             allowSpectators: boolean;
             allowAnonymousSpectators: boolean;
-            mapSeed: string;
         },
     ) {
         const gameRoom: GameRoom = {
@@ -244,7 +240,6 @@ class LobbySocket {
             allowSpectators: settings.allowSpectators,
             allowAnonymousSpectators: settings.allowAnonymousSpectators,
             spectators: [],
-            mapSeed: settings.mapSeed,
         };
 
         this.send({

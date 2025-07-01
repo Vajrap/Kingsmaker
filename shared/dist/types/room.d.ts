@@ -9,6 +9,5 @@ export interface GameRoom {
     allowSpectators: boolean;
     allowAnonymousSpectators: boolean;
     spectators: Player[];
-    mapSeed: string;
 }
 //# sourceMappingURL=room.d.ts.map

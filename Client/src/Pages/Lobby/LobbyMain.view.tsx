@@ -63,7 +63,6 @@ export type LobbyMainViewProps = {
     turnTimeLimit: number;
     allowSpectators: boolean;
     allowAnonymousSpectators: boolean;
-    mapSeed: string;
   }) => void;
 };
 

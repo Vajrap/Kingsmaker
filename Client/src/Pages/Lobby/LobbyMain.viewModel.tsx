@@ -131,7 +131,6 @@ export const LobbyMainViewModel: React.FC = () => {
       turnTimeLimit: number;
       allowSpectators: boolean;
       allowAnonymousSpectators: boolean;
-      mapSeed: string;
     }
   ) => {
     lobbySocket.createRoom(sessionId, settings);
