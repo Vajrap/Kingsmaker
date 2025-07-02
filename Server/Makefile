@@ -43,9 +43,10 @@ install:
 refresh:
 	make generate && make install SERVICE=$(SERVICE)
 
-# Shared library commands
+# Legacy shared library commands (optional for development)
 copy-shared:
-	@echo "📦 Copying shared library to all services..."
+	@echo "📦 [LEGACY] Copying shared library to all services..."
+	@echo "⚠️  Note: This is no longer needed for Docker builds (handled internally)"
 	@echo "Building shared library first..."
 	cd ../shared && bun install && bunx prisma generate --schema=./prisma/schema.prisma && bun run build
 	@echo "Copying to auth service..."
@@ -70,8 +71,10 @@ clean-shared:
 	@echo "✅ Cleaned all copied shared libraries!"
 
 # Docker Compose commands
-build: copy-shared
+build:
 	@echo "🐳 Building Docker services..."
+	@echo "Building shared library first..."
+	cd ../shared && bun install && bunx prisma generate --schema=./prisma/schema.prisma && bun run build
 	docker-compose build
 
 up:
@@ -87,7 +90,7 @@ clean:
 	docker-compose down -v --rmi all
 
 # Development commands
-dev: copy-shared up logs
+dev: build up logs
 
 # Build and run individual services
 auth:
@@ -131,9 +134,9 @@ help:
 	@echo "  migrate-reset - Reset database and run migrations"
 	@echo "  db-push       - Push schema to database (no migrations)"
 	@echo "  db-reset-hard - Drop all tables and recreate from schema"
-	@echo "  copy-shared   - Copy shared library to all services for local development"
+	@echo "  copy-shared   - [LEGACY] Copy shared library to all services (optional for development)"
 	@echo "  clean-shared  - Remove copied shared libraries from all services"
-	@echo "  build         - Copy shared and build all Docker services"
+	@echo "  build         - Build shared library and all Docker services"
 	@echo "  up            - Start all services in background"
 	@echo "  down          - Stop all services"
 	@echo "  logs          - Show logs for all services"

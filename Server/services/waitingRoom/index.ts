@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import type { GameRoom } from "./shared/types/types";
+import type { GameRoom } from "@kingsmaker/shared/types/types";
 import { roomManager } from "./Classes/RoomManager";
 
 const PORT = parseInt(process.env.PORT || "3000");
@@ -48,7 +48,7 @@ new Elysia()
 
             return {
                 status: "success",
-                data: { roomId: result.data.room },
+                data: { roomId: result.data.roomId },
             };
         } catch (error) {
             console.error("Error creating room:", error);
@@ -136,6 +136,9 @@ new Elysia()
 
                     const isHost = room.players[0]?.userId === sessionId;
 
+                    // Get enhanced player data with connection status
+                    const playersWithStatus = room.getPlayersWithStatus();
+
                     ws.send(
                         JSON.stringify({
                             type: "ROOM_DATA",
@@ -144,7 +147,7 @@ new Elysia()
                                     id: room.id,
                                     name: room.name,
                                     state: room.state,
-                                    players: room.players,
+                                    players: playersWithStatus,
                                     maxPlayers: room.maxPlayers,
                                     turnTimeLimit: room.turnTimeLimit,
                                     allowSpectators: room.allowSpectators,
@@ -153,6 +156,10 @@ new Elysia()
                                     spectators: room.spectators,
                                 },
                                 playerRole: isHost ? "host" : "player",
+                                connectionInfo: {
+                                    connectedPlayers: playersWithStatus.filter(p => p.connectionStatus === "connected").length,
+                                    disconnectedPlayers: playersWithStatus.filter(p => p.connectionStatus !== "connected").length,
+                                },
                             },
                         }),
                     );

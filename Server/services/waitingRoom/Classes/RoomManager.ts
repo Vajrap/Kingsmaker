@@ -1,15 +1,14 @@
 import { v4 as uuidv4 } from "uuid";
-import { errorRes, ok } from "../shared/types/types";
+import { errorRes, ok } from "@kingsmaker/shared/types/types";
 import type {
     ApiResponse,
     RoomCreatedEvent,
     GameRoom,
     Player,
-} from "../shared/types/types";
-import { prisma } from "../shared/prisma/prisma";
+} from "@kingsmaker/shared/types/types";
+import { prisma } from "@kingsmaker/shared/prisma/prisma";
 import { RoomInstance } from "./RoomInstance";
-
-const ROOM_CHECK_INTERVAL = 5000;
+import { PRESENCE_CONFIG } from "../config/presence";
 
 class RoomManager {
     rooms: Map<string, RoomInstance>;
@@ -20,13 +19,15 @@ class RoomManager {
 
     checkAllPresences() {
         setInterval(async () => {
+            console.log(`Checking presence for ${this.rooms.size} rooms...`);
             for (const [roomId, room] of this.rooms.entries()) {
                 await room.checkPresence();
                 if (room.isEmpty()) {
+                    console.log(`Room ${roomId} is empty, removing it`);
                     this.rooms.delete(roomId);
                 }
             }
-        }, ROOM_CHECK_INTERVAL);
+        }, PRESENCE_CONFIG.CHECK_INTERVAL_MS);
     }
 
     async createNewRoom(
@@ -61,7 +62,7 @@ class RoomManager {
             }
         }
 
-        return ok<RoomCreatedEvent>({ room: newRoom });
+        return ok<RoomCreatedEvent>({ roomId: newRoomId });
     }
 
     getAllRooms(): GameRoom[] {
@@ -134,6 +135,8 @@ class RoomManager {
                     skinId: undefined,
                 },
                 lastSeen: new Date().toISOString(),
+                connectionStatus: "connected",
+                disconnectedAt: undefined,
                 character: undefined,
             };
 

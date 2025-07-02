@@ -8,6 +8,8 @@ export interface Player {
         skinId?: string;
     };
     lastSeen: string;
+    connectionStatus: "connected" | "disconnected" | "grace_period";
+    disconnectedAt?: string;
     character?: PlayerCharacterSetup;
 }
 

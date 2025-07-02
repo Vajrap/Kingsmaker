@@ -3,7 +3,7 @@ import type {
     LobbyClientMessage,
     SessionData,
     GameRoom,
-} from "../shared/types/types";
+} from "@kingsmaker/shared/types/types";
 
 export async function handleCreateRoom(
     session: SessionData,

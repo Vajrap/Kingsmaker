@@ -1,4 +1,4 @@
-import { prisma } from "../shared/prisma/prisma";
+import { prisma } from "@kingsmaker/shared/prisma/prisma";
 
 export async function generateUniqueSessionId(): Promise<string> {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';

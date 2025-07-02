@@ -20,6 +20,10 @@ COPY Server/services/waitingRoom ./waitingRoom
 # Fix the file dependency issue by removing the problematic shared dependency
 RUN cd waitingRoom && sed 's/"@kingsmaker\/shared": "file:..\/..\/shared",//g' package.json > package.json.tmp && mv package.json.tmp package.json
 
+# 🆕 IMPORT REPLACEMENT: Convert @kingsmaker/shared imports to ../shared imports
+RUN find waitingRoom -name "*.ts" -type f -exec sed -i 's|from "@kingsmaker/shared/|from "../shared/|g' {} \;
+RUN find waitingRoom -name "*.ts" -type f -exec sed -i 's|from "@kingsmaker/shared"|from "../shared"|g' {} \;
+
 # Install waitingRoom service dependencies
 RUN cd waitingRoom && bun install
 

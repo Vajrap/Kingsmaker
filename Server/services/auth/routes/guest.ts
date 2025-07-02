@@ -1,5 +1,5 @@
-import { type LoginResponse, type ApiResponse, errorRes, ok } from "../shared/types/types";
-import { prisma } from "../shared/prisma/prisma";
+import { type LoginResponse, type ApiResponse, errorRes, ok } from "@kingsmaker/shared/types/types";
+import { prisma } from "@kingsmaker/shared/prisma/prisma";
 import { generateUniqueNameAlias } from "../logic/nameAlias";
 import { assignUniqueSessionId, generateUniqueSessionId } from "../logic/assignUniqueSessionId";
 import { addConnectionToSessionManager } from "../lib/sessionServiceClient";

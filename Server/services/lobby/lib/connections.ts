@@ -1,5 +1,5 @@
 import { ElysiaWS } from "elysia/dist/ws";
-import type { SessionData } from '../shared/types/types';
+import type { SessionData } from '@kingsmaker/shared/types/types';
 
 export const connections = new Map<string, {
     ws: ElysiaWS,

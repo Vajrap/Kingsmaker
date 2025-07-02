@@ -1,5 +1,5 @@
 import { uniqueNamesGenerator, adjectives, colors, animals } from 'unique-names-generator';
-import { prisma } from "../shared/prisma/prisma";
+import { prisma } from "@kingsmaker/shared/prisma/prisma";
 
 export async function generateUniqueNameAlias(): Promise<string> {
     const maxRetries = 5;

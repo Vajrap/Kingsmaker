@@ -1,5 +1,5 @@
-import { type LogoutBody, type ApiResponse, errorRes, ok } from "../shared/types/types";
-import { prisma } from "../shared/prisma/prisma";
+import { type LogoutBody, type ApiResponse, errorRes, ok } from "@kingsmaker/shared/types/types";
+import { prisma } from "@kingsmaker/shared/prisma/prisma";
 import { removeConnectionFromSessionManager } from "../lib/sessionServiceClient";
 
 export async function handleLogout({ body }: { body: LogoutBody }): Promise<ApiResponse<string>> {

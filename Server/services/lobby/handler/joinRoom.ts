@@ -1,4 +1,4 @@
-import type { LobbyServerMessage, LobbyClientMessage, SessionData } from '../shared/types/types';
+import type { LobbyServerMessage, LobbyClientMessage, SessionData } from '@kingsmaker/shared/types/types';
 
 export async function handleJoinRoom(
     session: SessionData,

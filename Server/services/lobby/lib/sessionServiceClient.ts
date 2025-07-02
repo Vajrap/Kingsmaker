@@ -1,6 +1,6 @@
-import { sessionManagerClient } from "../shared/session/sessionManagerClient";
-import { prisma } from "../shared/prisma/prisma";
-import type { SessionData } from "../shared/types/types";
+import { sessionManagerClient } from "@kingsmaker/shared/session/sessionManagerClient";
+import { prisma } from "@kingsmaker/shared/prisma/prisma";
+import type { SessionData } from "@kingsmaker/shared/types/types";
 
 async function getUserIdFromSessionId(sessionId: string): Promise<number | null> {
   const user = await prisma.user.findFirst({ 

@@ -1,6 +1,6 @@
-import type { User } from "../shared/prisma/generated";
-import { type AuthBody, type ApiResponse, type LoginResponse, errorRes, ok } from "../shared/types/types";
-import { prisma } from "../shared/prisma/prisma";
+import type { User } from "@kingsmaker/shared/prisma/generated";
+import { type AuthBody, type ApiResponse, type LoginResponse, errorRes, ok } from "@kingsmaker/shared/types/types";
+import { prisma } from "@kingsmaker/shared/prisma/prisma";
 import { resumeConnectionInSessionManager } from "../lib/sessionServiceClient";
 
 export async function handleAutoLogin({ body }: { body: AuthBody }): Promise<ApiResponse<LoginResponse>> {
