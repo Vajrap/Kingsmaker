@@ -22,6 +22,8 @@ export async function handleGetConnection({
             connectedAt: client.connectedAt.toISOString(),
             lastSeen: client.lastSeen.toISOString(),
             presenceStatus: client.presenceStatus,
+            waitingRoomId: client.waitingRoomId,
+            gameRoomId: client.gameRoomId,
         };
 
         return ok(data);

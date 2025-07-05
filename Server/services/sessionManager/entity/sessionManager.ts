@@ -1,6 +1,11 @@
 import { type User } from "@kingsmaker/shared/prisma/generated";
 
-type ClientPresenceStatus = 'INITIAL' | 'IN_LOBBY' | 'IN_WAITING_ROOM' | 'IN_GAME' | 'OFFLINE';
+type ClientPresenceStatus =
+    | "INITIAL"
+    | "IN_LOBBY"
+    | "IN_WAITING_ROOM"
+    | "IN_GAME"
+    | "OFFLINE";
 /*
 Behavior
 When a client logged in
@@ -34,12 +39,14 @@ When a client logged in
 
 type ConnectedClient = {
     sessionId: string;
-    userType: 'registered' | 'guest' | 'admin';
+    userType: "registered" | "guest" | "admin";
     username: string;
     presenceStatus: ClientPresenceStatus;
     lastSeen: Date;
     connectedAt: Date;
-}
+    waitingRoomId: string | null;
+    gameRoomId: string | null;
+};
 
 class SessionManager {
     private connectedClientsByUserId = new Map<number, ConnectedClient>();
@@ -50,9 +57,11 @@ class SessionManager {
             sessionId: user.sessionId,
             userType: user.type,
             username: user.username,
-            presenceStatus: 'INITIAL',
+            presenceStatus: "INITIAL",
             lastSeen: now,
             connectedAt: now,
+            waitingRoomId: null,
+            gameRoomId: null,
         });
     }
 

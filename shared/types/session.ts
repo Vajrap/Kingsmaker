@@ -11,4 +11,6 @@ export type SessionData = {
         | "IN_WAITING_ROOM"
         | "IN_GAME"
         | "OFFLINE";
-}; 
+    waitingRoomId: string | null;
+    gameRoomId: string | null;
+};

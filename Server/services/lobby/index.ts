@@ -5,7 +5,7 @@ import type {
 } from "./shared/types/types";
 import "dotenv/config";
 import { Elysia, t } from "elysia";
-import { handleGetRoomList } from "./handler/getRoomList";
+import { handleGetWaitingRoomList } from "./handler/getRoomList";
 import { sessionManagerClient } from "./shared/session/sessionManagerClient";
 import { prisma } from "./shared/prisma/prisma";
 import { handleJoinRoom } from "./handler/joinRoom";
@@ -159,7 +159,7 @@ new Elysia()
 
                 // Send initial room list for first connection
                 if (msg.type === "GET_ROOM_LIST") {
-                    const roomList = await handleGetRoomList();
+                    const roomList = await handleGetWaitingRoomList();
                     return ws.send(JSON.stringify(roomList));
                 }
             }
@@ -173,7 +173,7 @@ new Elysia()
             console.log(msg);
             switch (msg.type) {
                 case "GET_ROOM_LIST": {
-                    response = await handleGetRoomList(sessionData, msg);
+                    response = await handleGetWaitingRoomList(sessionData, msg);
                     break;
                 }
                 case "JOIN_ROOM": {

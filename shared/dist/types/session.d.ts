@@ -6,5 +6,7 @@ export type SessionData = {
     connectedAt: string;
     lastSeen: string;
     presenceStatus: "INITIAL" | "IN_LOBBY" | "IN_WAITING_ROOM" | "IN_GAME" | "OFFLINE";
+    waitingRoomId: string | null;
+    gameRoomId: string | null;
 };
 //# sourceMappingURL=session.d.ts.map
