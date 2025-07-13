@@ -1,131 +1,112 @@
-import type { User } from '../prisma/generated';
-import type { SessionData } from '../types/types';
+import type { User } from "../prisma/generated";
+import type { ApiResponse, SessionData } from "../types/types";
+import { sendRestRequest } from "../utils/sendRequest";
 
 export class SessionManagerClient {
     private baseUrl: string;
 
-    constructor(baseUrl: string = process.env.SESSION_MANAGER_URL || "http://sessionmanager:3000") {
+    constructor(
+        baseUrl: string = process.env.SESSION_MANAGER_URL ||
+            "http://sessionmanager:3000",
+    ) {
         this.baseUrl = baseUrl;
     }
 
-    private isApiResponse(obj: unknown): obj is { success: boolean; data?: unknown; message?: string } {
-        return (
-            typeof obj === "object" &&
-            obj !== null &&
-            "success" in obj &&
-            typeof (obj as any).success === "boolean"
-        );
-    }
-
-    private serializeUserPayload(user: any) {
-        return {
-            id: user.id,
-            username: user.username,
-            type: user.type,
-            email: user.email,
-            nameAlias: user.nameAlias,
-            isConfirmed: user.isConfirmed,
-            highestScore: user.highestScore,
-            totalGames: user.totalGames,
-            totalWins: user.totalWins,
-            totalLosses: user.totalLosses,
-            totalTies: user.totalTies,
-
-            achievements: user.achievements ?? {},
-            unlockables: user.unlockables ?? {},
-            customization: user.customization ?? {},
-            friends: user.friends ?? [],
-            blocked: user.blocked ?? [],
-
-            sessionId: user.sessionId ?? null,
-            sessionExpireAt: user.sessionExpireAt
-                ? new Date(user.sessionExpireAt).toISOString()
-                : null,
-        };
-    }
-
-    private async fetchSessionManager<T>(
+    private async fetchSessionManager<REQ, RES>(
         endpoint: string,
-        options: {
-            method?: 'GET' | 'POST' | 'DELETE',
-            body?: unknown
-        } = {}
-    ): Promise<T | null> {
-        try {
-            const response = await fetch(`${this.baseUrl}${endpoint}`, {
-                method: options.method || 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: options.body ? JSON.stringify(options.body) : undefined,
-            });
+        method: "GET" | "POST" | "DELETE" = "POST",
+        body?: REQ,
+    ): Promise<RES | null> {
+        const result = await sendRestRequest<REQ, RES>(
+            `${this.baseUrl}${endpoint}`,
+            method,
+            body,
+        );
+        return result.success ? result.data : null;
+    }
 
-            const raw = await response.text();
-            let json: any;
+    async createSession(user: User): Promise<void> {
+        const result = await sendRestRequest<User, { success: boolean }>(
+            `${this.baseUrl}/createSession`,
+            "POST",
+            user,
+        );
 
-            try {
-                json = JSON.parse(raw);
-            } catch {
-                console.error(`SessionManager returned non-JSON response from ${endpoint}:`, raw);
-                return null;
-            }
-
-            if (!this.isApiResponse(json)) {
-                console.error(`SessionManager ${endpoint} returned invalid structure:`, json);
-                return null;
-            }
-
-            if (!response.ok || !json.success) {
-                console.error(`SessionManager ${endpoint} failed: ${json.message || `HTTP ${response.status}`}`);
-                return null;
-            }
-
-            return json.data as T;
-        } catch (error) {
-            console.error(`Failed to call SessionManager ${endpoint}:`, error);
-            return null;
+        if (!result.success) {
+            throw new Error(result.message || "Failed to create session");
         }
     }
 
-    // Auth service methods
-    async addConnection(user: User): Promise<SessionData | null> {
-        return this.fetchSessionManager<SessionData>('/addConnection', {
-            body: this.serializeUserPayload(user)
-        });
+    async deleteSession(sessionId: string): Promise<void> {
+        const result = await sendRestRequest<
+            { sessionId: string },
+            { success: boolean }
+        >(`${this.baseUrl}/deleteSession`, "DELETE", { sessionId });
+
+        if (!result.success) {
+            throw new Error(result.message || "Failed to delete session");
+        }
     }
 
-    async resumeConnection(user: User): Promise<SessionData | null> {
-        return this.fetchSessionManager<SessionData>('/resumeConnection', {
-            body: this.serializeUserPayload(user)
-        });
+    async getAllSessions(): Promise<SessionData[]> {
+        const result = await sendRestRequest<{}, { data: SessionData[] }>(
+            `${this.baseUrl}/getAllSessions`,
+            "GET",
+        );
+
+        if (!result.success) {
+            throw new Error(result.message || "Failed to get all sessions");
+        }
+        return result.data.data;
     }
 
-    async removeConnection(userId: number): Promise<boolean> {
-        const result = await this.fetchSessionManager<any>('/removeConnection', {
-            method: 'DELETE',
-            body: { userId }
-        });
-        return result !== null;
+    async getSession(
+        sessionId: string,
+        getUserIdFromSessionId?: (sessionId: string) => Promise<number | null>,
+    ): Promise<SessionData | null> {
+        // Try direct session lookup first
+        const sessionData = await this.fetchSessionManager<
+            { sessionId: string },
+            SessionData
+        >("/getSession", "POST", { sessionId });
+
+        if (sessionData) {
+            return sessionData;
+        }
+
+        return null;
     }
 
-    // Lobby service methods
-    async getConnection(userId: number): Promise<SessionData | null> {
-        return this.fetchSessionManager<SessionData>('/getConnection', {
-            body: { userId }
-        });
+    /**
+     * Update session activity
+     */
+    async refreshSession(sessionId: string): Promise<boolean> {
+        const result = await sendRestRequest<
+            { sessionId: string },
+            { success: boolean }
+        >(`${this.baseUrl}/refreshSession`, "POST", { sessionId });
+
+        return result.success ? result.data.success : false;
     }
 
-    async updatePresence(userId: number, presence: string): Promise<boolean> {
-        const result = await this.fetchSessionManager<any>('/updatePresence', {
-            body: { userId, presence }
-        });
-        return result !== null;
+    /**
+     * Get all active sessions for a user
+     */
+    async getUserSessions(userId: string): Promise<string[]> {
+        const result = await sendRestRequest<{ userId: string }, string[]>(
+            `${this.baseUrl}/getUserSessions`,
+            "POST",
+            { userId },
+        );
+
+        return result.success ? result.data : [];
     }
 
-    // Helper method to get session by sessionId (needs database lookup first)
-    async getSessionBySessionId(sessionId: string, getUserIdFromSessionId: (sessionId: string) => Promise<number | null>): Promise<SessionData | null> {
-        const userId = await getUserIdFromSessionId(sessionId);
-        if (!userId) return null;
-        
-        return this.getConnection(userId);
+    async validateSession(
+        sessionId: string,
+        getUserIdFromSessionId?: (sessionId: string) => Promise<number | null>,
+    ): Promise<SessionData | null> {
+        return this.getSession(sessionId, getUserIdFromSessionId);
     }
 }
 
@@ -154,25 +135,28 @@ export interface WSValidationResult {
  */
 export async function validateWSSession(
     message: WSMessage,
-    getUserIdFromSessionId: (sessionId: string) => Promise<number | null>
+    getUserIdFromSessionId?: (sessionId: string) => Promise<number | null>,
 ): Promise<WSValidationResult> {
     // Check if sessionId exists in message
     const sessionId = message.data?.sessionId;
     if (!sessionId) {
         return {
             isValid: false,
-            errorMessage: 'MISSING_SESSION_ID'
+            errorMessage: "MISSING_SESSION_ID",
         };
     }
 
     try {
         // Get session data from SessionManager
-        const sessionData = await sessionManagerClient.getSessionBySessionId(sessionId, getUserIdFromSessionId);
-        
+        const sessionData = await sessionManagerClient.getSession(
+            sessionId,
+            getUserIdFromSessionId,
+        );
+
         if (!sessionData) {
             return {
                 isValid: false,
-                errorMessage: 'INVALID_SESSION'
+                errorMessage: "INVALID_SESSION",
             };
         }
 
@@ -182,10 +166,10 @@ export async function validateWSSession(
             sessionData,
         };
     } catch (error) {
-        console.error('Session validation error:', error);
+        console.error("Session validation error:", error);
         return {
             isValid: false,
-            errorMessage: 'SESSION_VALIDATION_ERROR'
+            errorMessage: "SESSION_VALIDATION_ERROR",
         };
     }
 }
@@ -193,12 +177,16 @@ export async function validateWSSession(
 /**
  * Standard WebSocket error message format
  */
-export function createWSErrorMessage(type: string, errorCode: string, message?: string) {
+export function createWSErrorMessage(
+    type: string,
+    errorCode: string,
+    message?: string,
+) {
     return {
-        type: 'ERROR',
+        type: "ERROR",
         data: {
             code: errorCode,
-            message: message || errorCode
-        }
+            message: message || errorCode,
+        },
     };
-} 
+}

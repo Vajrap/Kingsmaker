@@ -11,3 +11,12 @@ export interface GameRoom {
     allowAnonymousSpectators: boolean;
     spectators: Player[];
 }
+
+export interface ValidateRoomStatusRequest {
+    sessionId: string;
+    roomId: string;
+}
+
+export interface ValidateRoomStatusResponse {
+    valid: boolean;
+}

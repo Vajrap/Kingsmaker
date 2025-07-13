@@ -6,10 +6,13 @@ import { handleRegister } from "./routes/register";
 import { handleGuestLogin } from "./routes/guest";
 import { handleAutoLogin } from "./routes/autoLogin";
 import { handleLogout } from "./routes/logout";
-import type { LoginBody, LogoutBody, RegisterBody, AuthBody } from "./shared/types/types";
-// import type { LoginBody, LogoutBody, RegisterBody, AuthBody } from "@kingsmaker/shared/types/types";
-import { jsonPost } from "./shared/utils/jsonPost";
-// import { jsonPost } from "@kingsmaker/shared/utils/jsonPost";
+import type {
+    LoginBody,
+    LogoutBody,
+    RegisterBody,
+    AuthBody,
+} from "@kingsmaker/shared/types/types";
+import { jsonPost } from "@kingsmaker/shared/utils/jsonPost";
 
 const PORT = parseInt(process.env.PORT || "3000");
 

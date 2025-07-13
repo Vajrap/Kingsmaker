@@ -11,7 +11,7 @@ async function getUserIdFromSessionId(sessionId: string): Promise<number | null>
 }
 
 export async function getSession(sessionId: string): Promise<SessionData | null> {
-  return sessionManagerClient.getSessionBySessionId(sessionId, getUserIdFromSessionId);
+  return sessionManagerClient.getSession(sessionId, getUserIdFromSessionId);
 }
 
 export async function updatePresenceInSessionManager(userId: number, presenceStatus: string): Promise<boolean> {

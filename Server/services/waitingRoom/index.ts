@@ -1,10 +1,20 @@
 import { Elysia, t } from "elysia";
 import type { GameRoom } from "@kingsmaker/shared/types/types";
 import { roomManager } from "./Classes/RoomManager";
+// Initialize log capture first, before any console.log calls
+import { logCapture } from "@kingsmaker/shared/utils/logCapture";
+import { handleGetAllRooms } from "./routes/getAllRooms";
+import { handleGetDashboard } from "./routes/getDashboard";
 
 const PORT = parseInt(process.env.PORT || "3000");
 
 console.log("Waiting Room service running.");
+console.log(`📊 Dashboard available at http://localhost:${PORT}/dashboard`);
+
+// Add periodic heartbeat logging for testing
+setInterval(() => {
+    console.log(`💓 WaitingRoom service heartbeat - ${new Date().toISOString()}`);
+}, 30000);
 
 // Request/Response interfaces
 interface CreateRoomRequest {
@@ -96,6 +106,54 @@ new Elysia()
                 data: null,
                 message: "Failed to join room",
             };
+        }
+    })
+    .post("/validateRoomStatus", async ({ body }: { body: { sessionId: string; roomId: string } }) => {
+        console.log("Validating room status:", body);
+
+        try {
+            const room = roomManager.getRoom(body.roomId);
+            if (!room) {
+                return {
+                    valid: false,
+                    message: "Room not found",
+                };
+            }
+
+            const player = room.players.find(
+                (p) => p.userId === body.sessionId,
+            );
+            if (!player) {
+                return {
+                    valid: false,
+                    message: "Player not in room",
+                };
+            }
+
+            return {
+                valid: true,
+                roomId: body.roomId,
+            };
+        } catch (error) {
+            console.error("Error validating room status:", error);
+            return {
+                valid: false,
+                message: "Failed to validate room status",
+            };
+        }
+    })
+    // Dashboard routes
+    .get("/api/rooms", handleGetAllRooms)
+    .get("/dashboard", handleGetDashboard)
+    // WebSocket for log streaming
+    .ws("/logs", {
+        open(ws) {
+            logCapture.addDashboardClient(ws);
+            console.log("Dashboard client connected for log streaming");
+        },
+        close(ws) {
+            logCapture.removeDashboardClient(ws);
+            console.log("Dashboard client disconnected from log streaming");
         }
     })
     // WebSocket endpoint for real-time room management

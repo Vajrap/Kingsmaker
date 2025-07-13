@@ -1,73 +1,50 @@
-import { redis } from '../redis/redis';
+import { sendRestRequest } from "../utils/sendRequest";
 export class SessionManager {
-    static SESSION_TTL = 24 * 60 * 60; // 24 hours in seconds
+    static baseUrl = process.env.SESSION_MANAGER_URL || "http://sessionmanager:3000";
     /**
-     * Store session data in Redis with TTL
+     * Store session data in SessionManager service
      */
     static async createSession(sessionId, sessionData) {
-        const key = `session:${sessionId}`;
-        await redis.setex(key, this.SESSION_TTL, JSON.stringify(sessionData));
-        // Track active sessions for user
-        const userSessionsKey = `user-sessions:${sessionData.userId}`;
-        await redis.sadd(userSessionsKey, sessionId);
-        await redis.expire(userSessionsKey, this.SESSION_TTL);
+        const result = await sendRestRequest(`${this.baseUrl}/createSession`, "POST", { sessionId, sessionData });
+        if (!result.success) {
+            throw new Error(result.message || "Failed to create session");
+        }
     }
     /**
-     * Retrieve session data from Redis
+     * Retrieve session data from SessionManager service
      */
     static async getSession(sessionId) {
-        const key = `session:${sessionId}`;
-        const data = await redis.get(key);
-        if (!data) {
-            return null;
-        }
-        try {
-            return JSON.parse(data);
-        }
-        catch (error) {
-            console.error('Error parsing session data:', error);
-            return null;
-        }
+        const result = await sendRestRequest(`${this.baseUrl}/getSession`, "POST", { sessionId });
+        return result.success ? result.data : null;
     }
     /**
-     * Update session activity and extend TTL
+     * Update session activity
      */
     static async refreshSession(sessionId) {
-        const sessionData = await this.getSession(sessionId);
-        if (!sessionData) {
-            return false;
-        }
-        // Update last activity
-        sessionData.lastSeen = new Date().toISOString();
-        // Store with fresh TTL
-        await this.createSession(sessionId, sessionData);
-        return true;
+        const result = await sendRestRequest(`${this.baseUrl}/refreshSession`, "POST", { sessionId });
+        return result.success ? result.data.success : false;
     }
     /**
-     * Remove session from Redis
+     * Remove session from SessionManager service
      */
     static async deleteSession(sessionId) {
-        const sessionData = await this.getSession(sessionId);
-        if (sessionData) {
-            // Remove from user sessions set
-            const userSessionsKey = `user-sessions:${sessionData.userId}`;
-            await redis.srem(userSessionsKey, sessionId);
+        const result = await sendRestRequest(`${this.baseUrl}/deleteSession`, "POST", { sessionId });
+        if (!result.success) {
+            throw new Error(result.message || "Failed to delete session");
         }
-        // Remove session data
-        const key = `session:${sessionId}`;
-        await redis.del(key);
     }
     /**
      * Get all active sessions for a user
      */
     static async getUserSessions(userId) {
-        const userSessionsKey = `user-sessions:${userId}`;
-        return await redis.smembers(userSessionsKey);
+        const result = await sendRestRequest(`${this.baseUrl}/getUserSessions`, "POST", { userId });
+        return result.success ? result.data : [];
     }
     /**
      * Validate if session exists and is active
      */
     static async validateSession(sessionId) {
-        return await this.getSession(sessionId);
+        const result = await sendRestRequest(`${this.baseUrl}/validateSession`, "POST", { sessionId });
+        return result.success ? result.data : null;
     }
 }

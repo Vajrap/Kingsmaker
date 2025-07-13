@@ -1,4 +1,4 @@
-import { sendRestRequest } from "@/Request-Respond/ws/sendRequest";
+import { sendRestRequest } from "@/Request-Respond/sendRequest";
 import { sessionManager } from "@/singleton/sessionManager";
 import type {
     ApiResponse,
@@ -23,10 +23,11 @@ export async function sendGuestLoginRequest(
     if (response.success) {
         // Successful guest login - save session and redirect
         sessionManager.saveSession({
-            sessionId: response.data.sessionToken,
+            sessionId: response.data.sessionId,
             userType: "guest",
             username: response.data.username,
-            loginTime: Date.now(),
+            loginTime: Date.now().toString(),
+            presenceStatus: response.data.presenceStatus,
         });
 
         // Redirect to lobby

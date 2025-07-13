@@ -3,6 +3,7 @@ import {
 } from "@chakra-ui/react";
 import { FormControl, FormLabel } from "@chakra-ui/form-control";
 import { useState, useEffect, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   backgroundStyle, mainBoxStyle, headingStyle, inputStyle, warningStyle,
   buttonStyle, linkStyle, subHeadingStyle,
@@ -14,6 +15,7 @@ import GuestDialogue from "./Guest/guest";
 import ForgotDialogue from "./ForgotPassword/forgot";
 
 export default function LoginPage() {
+  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -28,7 +30,18 @@ export default function LoginPage() {
       if (sessionManager.isLoggedIn()) {
         const valid = await sessionManager.validateSession();
         if (valid) {
-          window.location.href = '/lobby';
+          // Check presence status for intelligent redirect
+          const presenceValidation = await sessionManager.validatePresenceStatus();
+          if (presenceValidation.valid && presenceValidation.roomId) {
+            // User should be in waiting room
+            navigate(`/waiting-room/${presenceValidation.roomId}`);
+          } else if (presenceValidation.redirectTo === 'waiting-room' && presenceValidation.roomId) {
+            // Redirect to specific waiting room
+            navigate(`/waiting-room/${presenceValidation.roomId}`);
+          } else {
+            // Default to lobby
+            navigate('/lobby');
+          }
           return;
         }
       }
@@ -37,7 +50,7 @@ export default function LoginPage() {
       setIsCheckingSession(false);
     };
     checkSession();
-  }, []);
+  }, [navigate]);
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
@@ -48,6 +61,8 @@ export default function LoginPage() {
       setLoginMessage("");
     } else {
       setLoginMessage("Login successful! Redirecting...");
+      // Navigate to lobby after successful login
+      navigate('/lobby');
     }
   };
 

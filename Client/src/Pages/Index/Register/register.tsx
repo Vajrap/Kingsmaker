@@ -52,21 +52,12 @@ export default function RegisterModal({
     const result = await sendRegisterRequest(email, username, password);
     setLoading(false);
 
-    if (result.head === "error") {
-      setError(result.body.message);
+    if (!result.success) {
+      setError(result.message || "Registration failed");
       return;
     }
 
-    if (result.head !== "register") {
-      console.error(`Unexpected result`, result);
-      return;
-    }
-
-    if (result.body.status === true) {
-      setSuccess("Registration successful!");
-    } else {
-      setError("Registration failed.");
-    }
+    setSuccess("Registration successful!");
   };
 
   const handleClose = () => {

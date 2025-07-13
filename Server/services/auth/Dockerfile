@@ -11,7 +11,7 @@ RUN echo "DATABASE_URL=postgresql://postgres:postgres@db:5432/kingsmaker" > .env
 # Install shared dependencies and generate Prisma client
 RUN cd shared && bun install && bunx prisma generate --schema=./prisma/schema.prisma
 
-# Build shared library with correct imports
+# Build shared library
 RUN cd shared && bun run build
 
 # Copy the auth service (from root context)
@@ -19,6 +19,10 @@ COPY Server/services/auth ./auth
 
 # Fix the file dependency issue by removing the problematic shared dependency
 RUN cd auth && sed 's/"@kingsmaker\/shared": "file:..\/..\/shared",//g' package.json > package.json.tmp && mv package.json.tmp package.json
+
+# Transform imports from @kingsmaker/shared to ../shared
+RUN find auth -name "*.ts" -type f -exec sed -i 's|from "@kingsmaker/shared/|from "../shared/|g' {} \;
+RUN find auth -name "*.ts" -type f -exec sed -i 's|from "@kingsmaker/shared"|from "../shared"|g' {} \;
 
 # Install auth service dependencies
 RUN cd auth && bun install

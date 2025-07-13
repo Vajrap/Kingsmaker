@@ -1,4 +1,4 @@
-import { sendRestRequest } from "@/Request-Respond/ws/sendRequest";
+import { sendRestRequest } from "@/Request-Respond/sendRequest";
 import { sessionManager } from "@/singleton/sessionManager";
 import type {
     ApiResponse,
@@ -6,12 +6,10 @@ import type {
     LoginResponse,
 } from "@shared/types/types";
 
-type WrappedLoginResponse = { data: LoginResponse };
-
 export async function sendLoginRequest(
     username: string,
     password: string,
-): Promise<ApiResponse<WrappedLoginResponse>> {
+): Promise<ApiResponse<LoginResponse>> {
     const body: LoginBody = {
         username,
         password,
@@ -23,21 +21,22 @@ export async function sendLoginRequest(
         "http://localhost:7001/login",
         "POST",
         body,
-    )) as ApiResponse<WrappedLoginResponse>;
+    )) as ApiResponse<LoginResponse>;
 
     if (response.success) {
         // Successful login - save session and redirect
         console.log(`RESPONSE`);
-        console.log(response.data.data.sessionId);
+        console.log(response.data);
         sessionManager.saveSession({
-            sessionId: response.data.data.sessionId,
-            userType: response.data.data.userType as "registered" | "guest",
-            username: response.data.data.username,
+            sessionId: response.data.sessionId,
+            userType: response.data.userType as "registered" | "guest",
+            username: response.data.username,
             loginTime: Date.now().toString(),
+            presenceStatus: response.data.presenceStatus || "INITIAL",
         });
 
-        // Redirect to lobby
-        window.location.href = "/lobby";
+        // Let the parent component handle navigation
+        // window.location.href = "/lobby";
     }
 
     return response;

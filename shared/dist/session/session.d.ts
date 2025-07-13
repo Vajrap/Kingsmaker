@@ -1,20 +1,20 @@
-import type { SessionData } from '../types/types';
+import type { SessionData } from "../types/types";
 export declare class SessionManager {
-    private static SESSION_TTL;
+    private static baseUrl;
     /**
-     * Store session data in Redis with TTL
+     * Store session data in SessionManager service
      */
     static createSession(sessionId: string, sessionData: SessionData): Promise<void>;
     /**
-     * Retrieve session data from Redis
+     * Retrieve session data from SessionManager service
      */
     static getSession(sessionId: string): Promise<SessionData | null>;
     /**
-     * Update session activity and extend TTL
+     * Update session activity
      */
     static refreshSession(sessionId: string): Promise<boolean>;
     /**
-     * Remove session from Redis
+     * Remove session from SessionManager service
      */
     static deleteSession(sessionId: string): Promise<void>;
     /**

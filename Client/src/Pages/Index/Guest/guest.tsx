@@ -61,20 +61,15 @@ export default function GuestDialogue({
     const result = await sendGuestLoginRequest(guestName);
     setLoading(false);
 
-    if (result.head === "error") {
-      setError(result.body.message);
+    if (!result.success) {
+      setError(result.message || "Guest login failed");
       return;
     }
 
-    if (result.head === "guest") {
-      setSuccess("Guest login successful! Redirecting...");
-      setTimeout(() => {
-        onClose();
-      }, 1000);
-    } else {
-      console.error(`Unexpected result`, result);
-      setError("Unexpected response from server.");
-    }
+    setSuccess("Guest login successful! Redirecting...");
+    setTimeout(() => {
+      onClose();
+    }, 1000);
   };
 
   const handleClose = () => {

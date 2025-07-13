@@ -1,88 +1,79 @@
 import { type User } from "@kingsmaker/shared/prisma/generated";
-
-type ClientPresenceStatus =
-    | "INITIAL"
-    | "IN_LOBBY"
-    | "IN_WAITING_ROOM"
-    | "IN_GAME"
-    | "OFFLINE";
-/*
-Behavior
-When a client logged in
-1. the Client send data
-    const clientData = {
-        userId: number,
-        sessionId: string,
-        presenceStatus: string,
-    };
-2. Auth take the data, validate login, check from db for user where user.userId = clientData.userId and check if user.sessionExpired > Date.now() ?
-    if true -> meaning it needed new sessionId; create new sessionId -> replace old sessionId with new sessionId
-    if false -> keep using the same sessionId
-    Auth send the clientData to SessionManager - await for the response
-3. SessionManager 'check' if the client is already connected or presenceStatus === 'OFFLINE'
-    if true -> add new client to connectedClientsByUserId map (or replace) with presenceStatus === 'INITIAL'
-    if false -> meaning, that the user is somewhere in the IN_WAITING_ROOM or IN_GAME, so we need to push them into 'THAT ROOM'
-    Session manager build response with new user data
-    const user = {
-        // only care for the presence
-        presenceStatus: clientData.presenceStatus,
-    };
-    send back to auth -> client
-4. client check the returning 'presenceStatus' -> then move to the respective page;
-    - INITIAL -> lobby
-    - IN_LOBBY -> lobby
-    - IN_GAME -> game
-    - IN_WAITING_ROOM -> waitingRoom
-    - OFFLIN -> impossible
-
-*/
-
-type ConnectedClient = {
-    sessionId: string;
-    userType: "registered" | "guest" | "admin";
-    username: string;
-    presenceStatus: ClientPresenceStatus;
-    lastSeen: Date;
-    connectedAt: Date;
-    waitingRoomId: string | null;
-    gameRoomId: string | null;
-};
+import {
+    ClientPresenceStatus,
+    type SessionData,
+} from "@kingsmaker/shared/types/types";
 
 class SessionManager {
-    private connectedClientsByUserId = new Map<number, ConnectedClient>();
+    // Single unified storage for all sessions/connections
+    private sessions = new Map<string, SessionData>();
+    private sessionsByUserId = new Map<number, string>(); // userId -> sessionId mapping
 
-    connectClient(user: User) {
+    // CREATE - Add a new connection/session
+    createSession(user: User): SessionData {
         const now = new Date();
-        this.connectedClientsByUserId.set(user.id, {
+        const sessionInfo: SessionData = {
             sessionId: user.sessionId,
+            userId: user.id,
             userType: user.type,
             username: user.username,
             presenceStatus: "INITIAL",
-            lastSeen: now,
-            connectedAt: now,
+            lastSeen: now.toDateString(),
+            connectedAt: now.toDateString(),
             waitingRoomId: null,
             gameRoomId: null,
-        });
+        };
+
+        this.sessions.set(user.sessionId, sessionInfo);
+        this.sessionsByUserId.set(user.id, user.sessionId);
+
+        return sessionInfo;
     }
 
-    disconnectClient(userId: number) {
-        this.connectedClientsByUserId.delete(userId);
+    deleteSession(sessionId: string): boolean {
+        const session = this.sessions.get(sessionId);
+        if (!session) return false;
+
+        this.sessions.delete(sessionId);
+        this.sessionsByUserId.delete(session.userId);
+        return true;
     }
 
-    updatePresence(userId: number, presence: ClientPresenceStatus) {
-        const client = this.connectedClientsByUserId.get(userId);
-        if (client) {
-            client.presenceStatus = presence;
-            client.lastSeen = new Date();
-        }
+    getAllSessions(): SessionData[] {
+        return Array.from(this.sessions.values());
     }
 
-    getClient(userId: number): ConnectedClient | undefined {
-        return this.connectedClientsByUserId.get(userId);
+    getSession(sessionId: string): SessionData | null {
+        return this.sessions.get(sessionId) || null;
     }
 
-    isConnected(userId: number): boolean {
-        return this.connectedClientsByUserId.has(userId);
+    refreshSession(sessionId: string): boolean {
+        const session = this.sessions.get(sessionId);
+        if (!session) return false;
+
+        session.lastSeen = new Date().toDateString();
+        return true;
+    }
+
+    updateSessionPresence(
+        sessionId: string,
+        presence: ClientPresenceStatus,
+    ): boolean {
+        const session = this.sessions.get(sessionId);
+        if (!session) return false;
+
+        session.presenceStatus = presence;
+        session.lastSeen = new Date().toDateString();
+        return true;
+    }
+
+    // UTILITY METHODS
+    isConnected(sessionId: string): boolean {
+        return this.sessions.has(sessionId);
+    }
+
+    validateSession(sessionId: string): SessionData | null {
+        return this.getSession(sessionId);
     }
 }
 

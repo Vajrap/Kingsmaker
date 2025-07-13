@@ -1,17 +1,22 @@
-import type { User } from '../prisma/generated';
-import type { SessionData } from '../types/types';
+import type { User } from "../prisma/generated";
+import type { SessionData } from "../types/types";
 export declare class SessionManagerClient {
     private baseUrl;
     constructor(baseUrl?: string);
-    private isApiResponse;
-    private serializeUserPayload;
     private fetchSessionManager;
-    addConnection(user: User): Promise<SessionData | null>;
-    resumeConnection(user: User): Promise<SessionData | null>;
-    removeConnection(userId: number): Promise<boolean>;
-    getConnection(userId: number): Promise<SessionData | null>;
-    updatePresence(userId: number, presence: string): Promise<boolean>;
-    getSessionBySessionId(sessionId: string, getUserIdFromSessionId: (sessionId: string) => Promise<number | null>): Promise<SessionData | null>;
+    createSession(user: User): Promise<void>;
+    deleteSession(sessionId: string): Promise<void>;
+    getAllSessions(): Promise<SessionData[]>;
+    getSession(sessionId: string, getUserIdFromSessionId?: (sessionId: string) => Promise<number | null>): Promise<SessionData | null>;
+    /**
+     * Update session activity
+     */
+    refreshSession(sessionId: string): Promise<boolean>;
+    /**
+     * Get all active sessions for a user
+     */
+    getUserSessions(userId: string): Promise<string[]>;
+    validateSession(sessionId: string, getUserIdFromSessionId?: (sessionId: string) => Promise<number | null>): Promise<SessionData | null>;
 }
 export declare const sessionManagerClient: SessionManagerClient;
 export interface WSMessage {
@@ -31,7 +36,7 @@ export interface WSValidationResult {
  * Standard WebSocket session validation for all services
  * This should be used by all WebSocket handlers to validate sessions consistently
  */
-export declare function validateWSSession(message: WSMessage, getUserIdFromSessionId: (sessionId: string) => Promise<number | null>): Promise<WSValidationResult>;
+export declare function validateWSSession(message: WSMessage, getUserIdFromSessionId?: (sessionId: string) => Promise<number | null>): Promise<WSValidationResult>;
 /**
  * Standard WebSocket error message format
  */

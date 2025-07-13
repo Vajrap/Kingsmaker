@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { GameRoom } from '@shared/types/types';
 import { lobbySocket, type LobbyEventHandler } from '@/Request-Respond/ws/lobbySocket';
 import { sessionManager } from '@/singleton/sessionManager';
 import { LobbyMainView } from './LobbyMain.view';
 
 export const LobbyMainViewModel: React.FC = () => {
+  const navigate = useNavigate();
   const [rooms, setRooms] = useState<GameRoom[]>([]);
   const [currentRoom, setCurrentRoom] = useState<GameRoom | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -17,13 +19,38 @@ export const LobbyMainViewModel: React.FC = () => {
 
   const session = sessionManager.getSession();
 
-  // Session check in separate useEffect to avoid connection loops
+  // Session check and presence validation
   useEffect(() => {
-    if (!session) {
-      console.log("No session found, redirecting to login");
-      window.location.href = '/';
-    }
-  }, [session]);
+    const validateSessionAndPresence = async () => {
+      if (!session) {
+        console.log("No session found, redirecting to login");
+        navigate('/');
+        return;
+      }
+
+      // Update presence status to IN_LOBBY
+      sessionManager.updatePresenceStatus('IN_LOBBY');
+
+      // Check presence status for potential redirects
+      const validation = await sessionManager.validatePresenceStatus();
+      if (!validation.valid && validation.redirectTo) {
+        if (validation.redirectTo === 'login') {
+          navigate('/');
+        } else if (validation.redirectTo === 'waiting-room' && validation.roomId) {
+          navigate(`/waiting-room/${validation.roomId}`);
+        }
+        // If redirectTo is 'lobby', we're already in the right place
+      } else if (validation.valid && validation.roomId) {
+        // User should be in waiting room
+        navigate(`/waiting-room/${validation.roomId}`);
+      }
+      
+      // If validation is successful and we're supposed to be in lobby, stay here
+      console.log('Presence validation result:', validation);
+    };
+
+    validateSessionAndPresence();
+  }, [session, navigate]);
 
   useEffect(() => {
     // Only proceed if we have a session
@@ -47,19 +74,22 @@ export const LobbyMainViewModel: React.FC = () => {
       },
 
       onRoomCreated: (roomId) => {
-        sessionStorage.setItem('kingsmaker-currentRoomID', roomId);
         console.log(`Room created successfully with ID: ${roomId}`);
-        // TODO: Navigate to the room page or fetch room details
+        // Update presence status and room ID
+        sessionManager.updatePresenceStatus('IN_WAITING_ROOM');
+        sessionManager.setWaitingRoomId(roomId);
+        // Navigate to waiting room
+        navigate(`/waiting-room/${roomId}`);
       },
 
       onRoomJoined: (roomId, success) => {
         if (success) {
-          sessionStorage.setItem('kingsmaker-currentRoomID', roomId);
-          // Find the room in our list to set as current
-          const room = rooms.find(r => r.id === roomId);
-          if (room) {
-            setCurrentRoom(room);
-          }
+          console.log(`Successfully joined room ${roomId}`);
+          // Update presence status and room ID
+          sessionManager.updatePresenceStatus('IN_WAITING_ROOM');
+          sessionManager.setWaitingRoomId(roomId);
+          // Navigate to waiting room
+          navigate(`/waiting-room/${roomId}`);
         } else {
           console.error(`Failed to join room ${roomId}`);
         }

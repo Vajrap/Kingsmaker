@@ -57,22 +57,12 @@ export default function ForgotDialogue({
     const result = await sendForgotRequest(email);
     setLoading(false);
 
-    if (result.head === "error") {
-      setError(result.body.message);
+    if (!result.success) {
+      setError(result.message || "Failed to send reset link");
       return;
     }
 
-    if (result.head !== "forgot") {
-      console.error(`Unexpected result`, result);
-      setError("Unexpected response from server.");
-      return;
-    }
-
-    if (result.body.status === true) {
-      setSuccess("Reset link sent to email!");
-    } else {
-      setError("Reset link failed to send.");
-    }
+    setSuccess("Reset link sent to email!");
   };
 
   const handleClose = () => {
