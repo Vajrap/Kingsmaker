@@ -3,18 +3,20 @@ import {
     ClientPresenceStatus,
     errorRes,
     ok,
+    UpdatePresenceInput,
+    UpdatePresenceOutput,
 } from "@kingsmaker/shared/types/types";
 import { sessionManager } from "../entity/sessionManager";
 
 export async function handleUpdatePresence({
     body,
 }: {
-    body: { sessionId: string; presence: ClientPresenceStatus };
-}): Promise<ApiResponse<{ success: boolean }>> {
+    body: UpdatePresenceInput;
+}): Promise<ApiResponse<UpdatePresenceOutput>> {
     try {
         const success = sessionManager.updateSessionPresence(
             body.sessionId,
-            body.presence,
+            body.presenceStatus,
         );
         return ok({ success });
     } catch (error) {

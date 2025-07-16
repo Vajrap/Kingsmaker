@@ -1,11 +1,16 @@
-import { type ApiResponse, errorRes, ok } from "@kingsmaker/shared/types/types";
+import {
+    type ApiResponse,
+    DeleteSessionOutput,
+    errorRes,
+    ok,
+} from "@kingsmaker/shared/types/types";
 import { sessionManager } from "../entity/sessionManager";
 
 export async function handleDeleteSession({
     body,
 }: {
     body: { sessionId: string };
-}): Promise<ApiResponse<{ success: boolean }>> {
+}): Promise<ApiResponse<DeleteSessionOutput>> {
     try {
         const success = sessionManager.deleteSession(body.sessionId);
         return ok({ success });

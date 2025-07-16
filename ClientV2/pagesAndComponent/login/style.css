@@ -1,0 +1,58 @@
+/* Login Page Specific Styles */
+
+.login-form {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.login-form .form-input:focus {
+    transform: translateY(-1px);
+    box-shadow: 0 0 0 3px var(--primary-200), 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.login-form .btn {
+    transition: all var(--transition-normal);
+}
+
+.login-form .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.login-form .btn:active {
+    transform: translateY(0);
+}
+
+/* Theme toggle animation */
+.theme-toggle .btn {
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+    transition: all var(--transition-normal);
+}
+
+.theme-toggle .btn:hover {
+    transform: scale(1.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+    .page-container {
+        padding: var(--space-4);
+    }
+    
+    .card {
+        padding: var(--space-6) !important;
+    }
+}

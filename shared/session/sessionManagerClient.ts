@@ -1,5 +1,5 @@
 import type { User } from "../prisma/generated";
-import type { ApiResponse, SessionData } from "../types/types";
+import { CreateSessionInput, type ApiResponse, type CreateSessionOutput, type DeleteSessionOutput, type SessionData } from "../types/types";
 import { sendRestRequest } from "../utils/sendRequest";
 
 export class SessionManagerClient {
@@ -25,27 +25,30 @@ export class SessionManagerClient {
         return result.success ? result.data : null;
     }
 
-    async createSession(user: User): Promise<void> {
-        const result = await sendRestRequest<User, { success: boolean }>(
+    async createSession(user: User): Promise<ApiResponse<CreateSessionOutput>> {
+        
+        const result = await sendRestRequest<CreateSessionInput, CreateSessionOutput>(
             `${this.baseUrl}/createSession`,
             "POST",
-            user,
-        );
+            { id: user.id, sessionId: user.sessionId || "" },
+        )
 
         if (!result.success) {
             throw new Error(result.message || "Failed to create session");
         }
+        return result;
     }
 
-    async deleteSession(sessionId: string): Promise<void> {
+    async deleteSession(sessionId: string): Promise<ApiResponse<DeleteSessionOutput>> {
         const result = await sendRestRequest<
             { sessionId: string },
-            { success: boolean }
+            DeleteSessionOutput
         >(`${this.baseUrl}/deleteSession`, "DELETE", { sessionId });
 
         if (!result.success) {
             throw new Error(result.message || "Failed to delete session");
         }
+        return result;
     }
 
     async getAllSessions(): Promise<SessionData[]> {

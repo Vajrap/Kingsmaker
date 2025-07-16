@@ -12,40 +12,59 @@ import { handleGetAllSessions } from "./routes/getAllSessions";
 import { handleValidateSession } from "./routes/validateSession";
 import { handleGetDashboard } from "./routes/dashboard/getDashboard";
 import {
-    ClientPresenceStatus,
     CreateSessionInput,
+    DeleteSessionInput,
+    DeleteSessionOutput,
+    GetSessionInput,
+    GetSessionOutput,
+    RefreshSessionInput,
+    RefreshSessionOutput,
+    UpdatePresenceInput,
+    UpdatePresenceOutput,
+    ValidateSessionInput,
+    ValidateSessionOutput,
 } from "@kingsmaker/shared/types/session";
+import { CreateSessionOutput } from "@kingsmaker/shared";
 
-const PORT = parseInt(process.env.PORT || "3000");
+const PORT = 7007;
 
 new Elysia()
     .use(cors())
     // Routes declaration
-    .post("/createSession", jsonPost<CreateSessionInput>(handleAddConnection))
+    .post(
+        "/createSession",
+        jsonPost<CreateSessionInput, CreateSessionOutput>(handleAddConnection),
+    )
     .delete(
         "/deleteSession",
-        jsonPost<{ sessionId: string }>(handleDeleteSession),
+        jsonPost<DeleteSessionInput, DeleteSessionOutput>(handleDeleteSession),
     )
     .get("/getAllSessions", handleGetAllSessions())
-    .get("/getSession", jsonPost<{ sessionId: string }>(handleGetSession))
+    .get(
+        "/getSession",
+        jsonPost<GetSessionInput, GetSessionOutput>(handleGetSession),
+    )
     .post(
         "/refreshSession",
-        jsonPost<{ sessionId: string }>(handleRefreshSession),
+        jsonPost<RefreshSessionInput, RefreshSessionOutput>(
+            handleRefreshSession,
+        ),
     )
     .post(
         "/updatePresence",
-        jsonPost<{ sessionId: string; presence: ClientPresenceStatus }>(
+        jsonPost<UpdatePresenceInput, UpdatePresenceOutput>(
             handleUpdatePresence,
         ),
     )
     .post(
         "/validateSession",
-        jsonPost<{ sessionId: string }>(handleValidateSession),
+        jsonPost<ValidateSessionInput, ValidateSessionOutput>(
+            handleValidateSession,
+        ),
     )
+
     // Dashboard routes
     .get("/dashboard", handleGetDashboard)
-    // WebSocket for log streaming
-    //
     .ws("/logs", {
         open(ws) {
             logCapture.addDashboardClient(ws);

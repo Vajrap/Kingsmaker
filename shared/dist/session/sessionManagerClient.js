@@ -10,16 +10,18 @@ export class SessionManagerClient {
         return result.success ? result.data : null;
     }
     async createSession(user) {
-        const result = await sendRestRequest(`${this.baseUrl}/createSession`, "POST", user);
+        const result = await sendRestRequest(`${this.baseUrl}/createSession`, "POST", { id: user.id, sessionId: user.sessionId || "" });
         if (!result.success) {
             throw new Error(result.message || "Failed to create session");
         }
+        return result;
     }
     async deleteSession(sessionId) {
         const result = await sendRestRequest(`${this.baseUrl}/deleteSession`, "DELETE", { sessionId });
         if (!result.success) {
             throw new Error(result.message || "Failed to delete session");
         }
+        return result;
     }
     async getAllSessions() {
         const result = await sendRestRequest(`${this.baseUrl}/getAllSessions`, "GET");

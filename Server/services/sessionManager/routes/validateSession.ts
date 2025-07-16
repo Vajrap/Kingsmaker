@@ -9,7 +9,7 @@ export async function handleValidateSession({
 }): Promise<ApiResponse<SessionData | null>> {
     try {
         const session = sessionManager.validateSession(body.sessionId);
-        
+
         if (!session) {
             return ok(null);
         }
@@ -19,8 +19,8 @@ export async function handleValidateSession({
             userId: session.userId,
             userType: session.userType,
             username: session.username,
-            connectedAt: session.connectedAt.toISOString(),
-            lastSeen: session.lastSeen.toISOString(),
+            connectedAt: session.connectedAt,
+            lastSeen: session.lastSeen,
             presenceStatus: session.presenceStatus,
             waitingRoomId: session.waitingRoomId,
             gameRoomId: session.gameRoomId,
@@ -31,4 +31,4 @@ export async function handleValidateSession({
         console.error("Error validating session:", error);
         return errorRes("Failed to validate session");
     }
-} 
+}

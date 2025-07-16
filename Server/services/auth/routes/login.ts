@@ -1,10 +1,11 @@
 import type { User } from "@kingsmaker/shared/prisma/generated";
-import { type LoginBody, type ApiResponse, type LoginResponse, errorRes, ok } from "@kingsmaker/shared/types/types";
+import { type LoginInput, type ApiResponse, type LoginOutput, errorRes, ok } from "@kingsmaker/shared/types/types";
 import { prisma } from "@kingsmaker/shared/prisma/prisma";
 import { assignUniqueSessionId } from "../logic/assignUniqueSessionId";
 import { addConnectionToSessionManager } from "../lib/sessionServiceClient";
 
-export async function handleLogin({ body }: {body: LoginBody}): Promise<ApiResponse<LoginResponse>> {
+export async function handleLogin({ body }: {body: LoginInput}): Promise<ApiResponse<LoginOutput>> {
+    console.log("handleLogin", body);
     const user = await findUser(body.username);
     if (!user) {
         console.warn(`Login failed: User '${body.username}' not found`);
@@ -26,22 +27,17 @@ export async function handleLogin({ body }: {body: LoginBody}): Promise<ApiRespo
         user.sessionExpireAt = result.expiresAt;
     }
 
-    const sessionManagerResponse = await addConnectionToSessionManager(user);
-    if (!sessionManagerResponse) {
-        console.warn("Failed to add connection to SessionManager, proceeding with login");
-    } else {
-        user.sessionId = sessionManagerResponse.sessionId;
-    }
+    await addConnectionToSessionManager(user);
 
-    const data: LoginResponse = {
+    const data: LoginOutput = {
         sessionId: user.sessionId || "",
         userType: user.type,
         username: user.username,
         nameAlias: user.nameAlias,
-        presenceStatus: sessionManagerResponse?.presenceStatus || "INITIAL"
+        presenceStatus: "INITIAL"
     };
 
-    return ok<LoginResponse>(data)
+    return ok<LoginOutput>(data)
 }
 
 async function findUser(username: string): Promise<User | null> {

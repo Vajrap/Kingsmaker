@@ -1,10 +1,10 @@
-import { type LoginResponse, type ApiResponse, errorRes, ok } from "@kingsmaker/shared/types/types";
+import { type LoginOutput, type ApiResponse, errorRes, ok } from "@kingsmaker/shared/types/types";
 import { prisma } from "@kingsmaker/shared/prisma/prisma";
 import { generateUniqueNameAlias } from "../logic/nameAlias";
-import { assignUniqueSessionId, generateUniqueSessionId } from "../logic/assignUniqueSessionId";
+import { generateUniqueSessionId } from "../logic/assignUniqueSessionId";
 import { addConnectionToSessionManager } from "../lib/sessionServiceClient";
 
-export async function handleGuestLogin(): Promise<ApiResponse<LoginResponse>> {
+export async function handleGuestLogin(): Promise<ApiResponse<LoginOutput>> {
     try {
         const nameAlias = await generateUniqueNameAlias();
 
@@ -18,15 +18,15 @@ export async function handleGuestLogin(): Promise<ApiResponse<LoginResponse>> {
 
         const sessionManagerResponse = await addConnectionToSessionManager(user);
         
-        const data: LoginResponse = {
+        const data: LoginOutput = {
             nameAlias: user.nameAlias,
             username: user.username,
             userType: "guest",
             sessionId: user.sessionId!,
-            presenceStatus: sessionManagerResponse?.presenceStatus || "INITIAL"
+            presenceStatus: "INITIAL"
         };
 
-        return ok<LoginResponse>(data);
+        return ok<LoginOutput>(data);
     } catch (error) {
         console.error('Guest login error:', error);
         return errorRes("Failed to process guest login");

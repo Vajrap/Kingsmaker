@@ -7,16 +7,20 @@ import { wsOptions } from "./wsOptions";
 import { handleGetAllClients } from "./routes/getAllClients";
 import { handleGetDashboard } from "./routes/getDashboard";
 
-const PORT = parseInt(process.env.PORT || "3000");
+const PORT = 7004;
 
 new Elysia()
     .use(cors())
-    // WebSocket routes
-    .ws("/lobby", wsOptions)
+    // Client routes
+    .ws("/lobby", {
+        open(ws) {},
+        message(ws, message) {},
+        close(ws) {},
+    })
+
     // Dashboard routes
     .get("/api/clients", handleGetAllClients)
     .get("/dashboard", handleGetDashboard)
-    // WebSocket for log streaming
     .ws("/logs", {
         open(ws) {
             logCapture.addDashboardClient(ws);
@@ -25,7 +29,14 @@ new Elysia()
         close(ws) {
             logCapture.removeDashboardClient(ws);
             console.log("Dashboard client disconnected from log streaming");
-        }
+        },
+    })
+
+    // Chat
+    .ws("/chat", {
+        open(ws) {},
+        message(ws, message) {},
+        close(ws) {},
     })
     // End WebSocket routes
     .listen(PORT);

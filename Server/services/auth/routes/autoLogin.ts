@@ -1,9 +1,9 @@
 import type { User } from "@kingsmaker/shared/prisma/generated";
-import { type AuthBody, type ApiResponse, type LoginResponse, errorRes, ok } from "@kingsmaker/shared/types/types";
+import { type AuthInput, type ApiResponse, type LoginOutput, errorRes, ok } from "@kingsmaker/shared/types/types";
 import { prisma } from "@kingsmaker/shared/prisma/prisma";
 import { resumeConnectionInSessionManager } from "../lib/sessionServiceClient";
 
-export async function handleAutoLogin({ body }: { body: AuthBody }): Promise<ApiResponse<LoginResponse>> {
+export async function handleAutoLogin({ body }: { body: AuthInput }): Promise<ApiResponse<LoginOutput>> {
     try {
         // Find user by session token
         const user = await findUserBySessionToken(body.token);
@@ -16,21 +16,25 @@ export async function handleAutoLogin({ body }: { body: AuthBody }): Promise<Api
             return errorRes("Session has expired");
         }
 
+        if (!user.sessionId) {
+            return errorRes("No session ID found");
+        }
+
         // Resume connection in SessionManager
-        const sessionManagerResponse = await resumeConnectionInSessionManager(user);
+        const sessionManagerResponse = await resumeConnectionInSessionManager(user.sessionId);
         if (!sessionManagerResponse) {
             console.warn("Failed to resume connection in SessionManager, proceeding with auto-login");
         }
 
-        const data: LoginResponse = {
+        const data: LoginOutput = {
             nameAlias: user.nameAlias,
             username: user.username,
             userType: user.type === "registered" ? "registered" : user.type === "guest" ? "guest" : "admin",
             sessionId: user.sessionId!,
-            presenceStatus: sessionManagerResponse?.presenceStatus || "INITIAL"
+            presenceStatus: "INITIAL"
         };
 
-        return ok<LoginResponse>(data);
+        return ok<LoginOutput>(data);
     } catch (error) {
         console.error('Auto-login error:', error);
         return errorRes("Failed to auto-login");

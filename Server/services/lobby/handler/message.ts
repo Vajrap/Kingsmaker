@@ -2,9 +2,10 @@ import type { LobbyClientMessage, LobbyServerMessage, SessionData } from "@kings
 import { handleGetWaitingRoomList } from "./getRoomList";
 import { handleJoinRoom } from "./joinRoom";
 import { handleCreateRoom } from "./createRoom";
-import { connections } from "../logic/connections";
+
 import { validateWSSession, createWSErrorMessage } from "@kingsmaker/shared/session/sessionManagerClient";
 import { prisma } from "@kingsmaker/shared/prisma/prisma";
+import { connections } from "entity/Connections";
 
 // Helper function for session validation
 async function getUserIdFromSessionId(sessionId: string): Promise<number | null> {

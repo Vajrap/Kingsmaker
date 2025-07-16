@@ -1,8 +1,8 @@
-import { type RegisterBody, type RegisterResponse, type ApiResponse, errorRes, ok } from "@kingsmaker/shared/types/types";
+import { type RegisterInput, type RegisterOutput, type ApiResponse, errorRes, ok } from "@kingsmaker/shared/types/types";
 import { prisma } from "@kingsmaker/shared/prisma/prisma";
 import { generateUniqueNameAlias } from "../logic/nameAlias";
 
-export async function handleRegister({ body }: { body: RegisterBody }): Promise<ApiResponse<RegisterResponse>> {
+export async function handleRegister({ body }: { body: RegisterInput }): Promise<ApiResponse<RegisterOutput>> {
     try {
         // Check if username already exists
         const existingUser = await prisma.user.findUnique({
@@ -11,6 +11,18 @@ export async function handleRegister({ body }: { body: RegisterBody }): Promise<
 
         if (existingUser) {
             return errorRes("Username already exists");
+        }
+
+        if (!validatePassword(body.password)) {
+            return errorRes("Invalid password");
+        }
+
+        if (!isUserNameAvailable(body.username)) {
+            return errorRes("Username already exists");
+        }
+
+        if (!isEmailAvailable(body.email)) {
+            return errorRes("Email already exists");
         }
 
         // Check if email already exists
@@ -42,7 +54,7 @@ export async function handleRegister({ body }: { body: RegisterBody }): Promise<
             }
         });
 
-        const data: RegisterResponse = {
+        const data: RegisterOutput = {
             id: user.id,
             nameAlias: user.nameAlias,
             username: user.username,
@@ -50,7 +62,10 @@ export async function handleRegister({ body }: { body: RegisterBody }): Promise<
             type: "registered"
         };
 
-        return ok<RegisterResponse>(data);
+        // Send confirmation email
+        sendConfirmationEmail(user);
+
+        return ok<RegisterOutput>(data);
     } catch (error) {
         console.error('Registration error:', error);
         return errorRes("Failed to register user");

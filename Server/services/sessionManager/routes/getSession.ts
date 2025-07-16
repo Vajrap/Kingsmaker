@@ -1,4 +1,9 @@
-import { type ApiResponse, errorRes, ok } from "@kingsmaker/shared/types/types";
+import {
+    type ApiResponse,
+    errorRes,
+    GetSessionOutput,
+    ok,
+} from "@kingsmaker/shared/types/types";
 import { type SessionData } from "@kingsmaker/shared/types/types";
 import { sessionManager } from "../entity/sessionManager";
 
@@ -6,7 +11,7 @@ export async function handleGetSession({
     body,
 }: {
     body: { sessionId: string };
-}): Promise<ApiResponse<SessionData | null>> {
+}): Promise<ApiResponse<GetSessionOutput>> {
     try {
         const session = sessionManager.getSession(body.sessionId);
 
@@ -14,7 +19,7 @@ export async function handleGetSession({
             return ok(null);
         }
 
-        const data: SessionData = {
+        const data: GetSessionOutput = {
             sessionId: session.sessionId,
             userId: session.userId,
             userType: session.userType,

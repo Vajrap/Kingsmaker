@@ -1,10 +1,10 @@
-import { connections } from "../lib/connections";
+import { connections } from "entity/Connections";
 
 export async function handleGetAllClients() {
     try {
         const allConnections = connections.getAllConnections();
-        
-        const clients = allConnections.map(connection => ({
+
+        const clients = allConnections.map((connection) => ({
             userId: connection.userId,
             username: connection.username,
             userType: connection.userType,
@@ -14,7 +14,7 @@ export async function handleGetAllClients() {
             sessionId: connection.sessionId,
             roomId: connection.roomId || null,
             ipAddress: connection.ipAddress,
-            userAgent: connection.userAgent
+            userAgent: connection.userAgent,
         }));
 
         return {
@@ -22,17 +22,21 @@ export async function handleGetAllClients() {
             data: {
                 clients,
                 total: clients.length,
-                connected: clients.filter(c => c.status === "connected").length,
-                disconnected: clients.filter(c => c.status === "disconnected").length,
-                inGracePeriod: clients.filter(c => c.status === "grace_period").length
-            }
+                connected: clients.filter((c) => c.status === "connected")
+                    .length,
+                disconnected: clients.filter((c) => c.status === "disconnected")
+                    .length,
+                inGracePeriod: clients.filter(
+                    (c) => c.status === "grace_period",
+                ).length,
+            },
         };
     } catch (error) {
         console.error("Error getting all clients:", error);
         return {
             status: "error",
             data: null,
-            message: "Failed to get clients"
+            message: "Failed to get clients",
         };
     }
-} 
+}

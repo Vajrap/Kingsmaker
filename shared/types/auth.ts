@@ -1,15 +1,15 @@
-export type LoginBody = {
+export type LoginInput = {
     username: string;
     password: string;
 };
 
-export type AuthBody = {
+export type AuthInput = {
     token: string;
 };
 
-export type GuestBody = {};
+export type GuestInput = {};
 
-export type LoginResponse = {
+export type LoginOutput = {
     sessionId: string;
     userType: "registered" | "guest" | "admin";
     username: string;
@@ -22,13 +22,13 @@ export type LoginResponse = {
         | "OFFLINE";
 };
 
-export type RegisterBody = {
+export type RegisterInput = {
     username: string;
     email: string;
     password: string;
 };
 
-export type RegisterResponse = {
+export type RegisterOutput = {
     id: number;
     nameAlias: string;
     username: string;
@@ -36,10 +36,10 @@ export type RegisterResponse = {
     type: "registered" | "guest" | "admin";
 };
 
-export type LogoutBody = {
+export type LogoutInput = {
     sessionToken: string;
 };
 
-export type LogoutResponse = {
+export type LogoutOutput = {
     message: string;
-}; 
+};

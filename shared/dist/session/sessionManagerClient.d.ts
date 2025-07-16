@@ -1,11 +1,11 @@
 import type { User } from "../prisma/generated";
-import type { SessionData } from "../types/types";
+import { type ApiResponse, type CreateSessionOutput, type DeleteSessionOutput, type SessionData } from "../types/types";
 export declare class SessionManagerClient {
     private baseUrl;
     constructor(baseUrl?: string);
     private fetchSessionManager;
-    createSession(user: User): Promise<void>;
-    deleteSession(sessionId: string): Promise<void>;
+    createSession(user: User): Promise<ApiResponse<CreateSessionOutput>>;
+    deleteSession(sessionId: string): Promise<ApiResponse<DeleteSessionOutput>>;
     getAllSessions(): Promise<SessionData[]>;
     getSession(sessionId: string, getUserIdFromSessionId?: (sessionId: string) => Promise<number | null>): Promise<SessionData | null>;
     /**

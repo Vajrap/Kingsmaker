@@ -2,17 +2,17 @@ import { prisma } from "@kingsmaker/shared/prisma/prisma";
 import {
     type ApiResponse,
     CreateSessionInput,
+    CreateSessionOutput,
     errorRes,
     ok,
 } from "@kingsmaker/shared/types/types";
 import { sessionManager } from "../entity/sessionManager";
-import { type SessionManagerUserLoginResponse } from "@kingsmaker/shared/types/types";
 
 export async function handleAddConnection({
     body,
 }: {
     body: CreateSessionInput;
-}): Promise<ApiResponse<SessionManagerUserLoginResponse>> {
+}): Promise<ApiResponse<CreateSessionOutput>> {
     try {
         const dbUser = await prisma.user.findUnique({ where: { id: body.id } });
         if (!dbUser) {
@@ -29,7 +29,7 @@ export async function handleAddConnection({
 
         const sessionInfo = sessionManager.createSession(dbUser);
 
-        const data: SessionManagerUserLoginResponse = {
+        const data: CreateSessionOutput = {
             sessionId: sessionInfo.sessionId,
             userId: sessionInfo.userId,
             userType: sessionInfo.userType,
@@ -37,6 +37,8 @@ export async function handleAddConnection({
             connectedAt: sessionInfo.connectedAt,
             lastSeen: sessionInfo.lastSeen,
             presenceStatus: sessionInfo.presenceStatus,
+            waitingRoomId: null,
+            gameRoomId: null,
         };
 
         return ok(data);

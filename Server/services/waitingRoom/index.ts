@@ -6,10 +6,7 @@ import { logCapture } from "@kingsmaker/shared/utils/logCapture";
 import { handleGetAllRooms } from "./routes/getAllRooms";
 import { handleGetDashboard } from "./routes/getDashboard";
 
-const PORT = parseInt(process.env.PORT || "3000");
-
-console.log("Waiting Room service running.");
-console.log(`📊 Dashboard available at http://localhost:${PORT}/dashboard`);
+const PORT = 7005;
 
 // Add periodic heartbeat logging for testing
 setInterval(() => {
@@ -229,4 +226,7 @@ new Elysia()
     })
     .listen(PORT);
 
+
+console.log("Waiting Room service running.");
+console.log(`📊 Dashboard available at http://localhost:${PORT}/dashboard`);
 console.log(`🚀 Waiting Room service running on http://localhost:${PORT}`);

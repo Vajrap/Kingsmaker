@@ -7,13 +7,14 @@
 ✅ COMPLETED:
 - Database service (PostgreSQL + Prisma)
 - Shared library (@kingsmaker/shared) + types
-- Auth service (Bun + JWT + sessionManager integration) 
+- Auth service (Bun + JWT + sessionManager integration) [UPDATED: Fixed type system + Input/Output convention]
 - SessionManager service (Bun + in-memory session tracking)
 - Frontend login page (basic implementation)
 - Redis service (Docker + state management)
 - Lobby service (Bun + WebSocket + Redis)
 - Client lobby page (connected to Redis-backed lobby service)
 - Client lobby type system (shared types from server)
+- Type system standardization (Input/Output naming convention)
 
 🔄 IN PROGRESS:
 - Waiting room service architecture
@@ -27,11 +28,13 @@
 
 ## Service Architecture Status
 ```
-auth-service (Bun:7001): ✅ OPERATIONAL
+auth-service (Bun:7001): ✅ OPERATIONAL [UPDATED]
   - HTTP endpoints: login, register, guest, refresh, autoLogin, logout
   - Session management via sessionManager service
   - Type-safe HTTP client for service communication
   - Database: User model + Session model
+  - Input/Output type naming convention implemented
+  - jsonPost function properly typed with two generic parameters
 
 sessionmanager-service (Bun:7007): ✅ OPERATIONAL
   - HTTP endpoints: addConnection, removeConnection, getConnection, updatePresence
