@@ -12,113 +12,18 @@ services:
         volumes:
             - postgres-data:/var/lib/postgresql/data
 
-    auth:
-        build:
-            context: ..
-            dockerfile: Server/services/auth/Dockerfile
-        container_name: auth_service
-        ports:
-            - "7001:3000"
-        depends_on:
-            - db
-            - sessionmanager
-        environment:
-            DATABASE_URL: postgresql://postgres:postgres@db:5432/kingsmaker
-            SESSION_MANAGER_URL: http://sessionmanager:3000
-
-    chat:
-        build:
-            context: ..
-            dockerfile: Server/services/chat/Dockerfile
-        container_name: chat_service
-        ports:
-            - "7002:3000"
-        depends_on:
-            - db
-        environment:
-            DATABASE_HOST: db
-            DATABASE_USER: postgres
-            DATABASE_PASSWORD: postgres
-            DATABASE_NAME: kingsmaker
-            DATABASE_PORT: 5432
-
-    game:
-        build:
-            context: ..
-            dockerfile: Server/services/game/Dockerfile
-        container_name: game_service
-        ports:
-            - "7003:3000"
-        depends_on:
-            - db
-        environment:
-            DATABASE_HOST: db
-            DATABASE_USER: postgres
-            DATABASE_PASSWORD: postgres
-            DATABASE_NAME: kingsmaker
-            DATABASE_PORT: 5432
-
-    lobby:
-        build:
-            context: ..
-            dockerfile: Server/services/lobby/Dockerfile
-        container_name: lobby_service
-        ports:
-            - "7004:3000"
-        depends_on:
-            - db
-            - sessionmanager
-        environment:
-            DATABASE_URL: postgresql://postgres:postgres@db:5432/kingsmaker
-            SESSION_MANAGER_URL: http://sessionmanager:3000
-            WAITING_ROOM_URL: http://waitingRoom:3000
-
-    waitingroom:
-        build:
-            context: ..
-            dockerfile: Server/services/waitingRoom/Dockerfile
-        container_name: waitingroom_service
-        ports:
-            - "7005:3000"
-        depends_on:
-            - db
-            - sessionmanager
-        environment:
-            DATABASE_URL: postgresql://postgres:postgres@db:5432/kingsmaker
-            SESSION_MANAGER_URL: http://sessionmanager:3000
-
-    store:
-        build:
-            context: ..
-            dockerfile: Server/services/store/Dockerfile
-        container_name: store_service
-        ports:
-            - "7006:3000"
-        depends_on:
-            - db
-        environment:
-            DATABASE_HOST: db
-            DATABASE_USER: postgres
-            DATABASE_PASSWORD: postgres
-            DATABASE_NAME: kingsmaker
-            DATABASE_PORT: 5432
-
-    sessionmanager:
-        build:
-            context: ..
-            dockerfile: Server/services/sessionManager/Dockerfile
-        container_name: sessionmanager_service
-        ports:
-            - "7007:3000"
-        depends_on:
-            - db
-        environment:
-            DATABASE_URL: postgresql://postgres:postgres@db:5432/kingsmaker
-            DATABASE_HOST: db
-            DATABASE_USER: postgres
-            DATABASE_PASSWORD: postgres
-            DATABASE_NAME: kingsmaker
-            DATABASE_PORT: 5432
+    monolith:
+      build:
+        context: ..
+        dockerfile: Server/services/monolith/Dockerfile
+      container_name: monolith_service
+      ports:
+        - "7777:3000"
+      depends_on:
+        - db
+      environment:
+        PORT: 3000
+        DATABASE_URL: postgresql://postgres:postgres@db:5432/kingsmaker
 
 volumes:
     postgres-data:

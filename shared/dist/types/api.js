@@ -1,6 +1,7 @@
-export function errorRes(message) {
+export function errorRes(type, message) {
     return {
         success: false,
+        type,
         message,
     };
 }

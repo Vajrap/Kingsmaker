@@ -8,6 +8,8 @@ export class Connection {
     constructor(ws: ElysiaWS, session: SessionData) {
         this.ws = ws;
         this.session = session;
+
+        const a = session.waitingRoomId;
     }
 }
 
@@ -45,7 +47,9 @@ export class Connections {
     }
 
     private getConnectionByUserId(id: number): Connection | null {
-        return this.connections.get(id);
+        const connection = this.connections.get(id);
+        if (connection === undefined) return null;
+        return connection;
     }
 
     getConnectionBySessionId(sessionId: string): Connection | null {
@@ -59,7 +63,15 @@ export class Connections {
 
     private validateSession(id: string): boolean {
         const connection = this.getConnectionBySessionId(id);
-        return connection !== undefined && connection.session !== undefined;
+        return (
+            connection !== undefined &&
+            connection !== null &&
+            connection.session !== undefined
+        );
+    }
+
+    getAllConnections(): Connection[] {
+        return Array.from(this.connections.values());
     }
 }
 

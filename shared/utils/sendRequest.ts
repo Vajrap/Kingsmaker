@@ -27,6 +27,7 @@ export async function sendRestRequest<REQ, RES>(
                 .catch(() => ({ message: "Unknown error" }));
             return {
                 success: false,
+                type: error.name,
                 message: error.message,
             };
         }
@@ -36,6 +37,10 @@ export async function sendRestRequest<REQ, RES>(
         clearTimeout(timer);
         return {
             success: false,
+            type:
+                err instanceof DOMException && err.name === "AbortError"
+                    ? err.name
+                    : "Unknown Error",
             message:
                 err instanceof DOMException && err.name === "AbortError"
                     ? "Request timed out"

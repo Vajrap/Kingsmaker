@@ -17,9 +17,9 @@
     "paths": {
       "@/*": ["./*"],
       "@/utility/*": ["./utility/*"],
-      "@/pages/*": ["./pagesAndComponent/*"]
+      "@/pages/*": ["pages/*"]
     }
   },
-  "include": ["src", "utility", "pagesAndComponent", "*.ts"],
+  "include": ["src", "utility", "pages", "*.ts"],
   "exclude": ["node_modules", "dist"]
 } 

@@ -1,3 +1,5 @@
+import { Player } from "./player";
+
 export type LoginInput = {
     username: string;
     password: string;
@@ -10,16 +12,7 @@ export type AuthInput = {
 export type GuestInput = {};
 
 export type LoginOutput = {
-    sessionId: string;
-    userType: "registered" | "guest" | "admin";
-    username: string;
-    nameAlias: string;
-    presenceStatus:
-        | "INITIAL"
-        | "IN_LOBBY"
-        | "IN_WAITING_ROOM"
-        | "IN_GAME"
-        | "OFFLINE";
+    player: Player;
 };
 
 export type RegisterInput = {
@@ -43,3 +36,8 @@ export type LogoutInput = {
 export type LogoutOutput = {
     message: string;
 };
+
+export enum ALREADY_LOGIN {
+    GUEST = "ALREADY_LOGGED_IN_GUEST",
+    REGIST = "ALREADY_LOGGED_IN_REGIST",
+}

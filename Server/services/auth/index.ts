@@ -17,7 +17,7 @@ import type {
 } from "@kingsmaker/shared/types/types";
 import { jsonPost } from "@kingsmaker/shared/utils/jsonPost";
 
-const PORT = 7001;
+const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 
 new Elysia()
     .use(cors())

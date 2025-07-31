@@ -16,6 +16,11 @@ model User {
   email           String    @unique
   password        String
   nameAlias       String    @unique
+  portrait        String
+  skin            String
+  might           Int
+  intelligence    Int
+  dexterity       Int
   isConfirmed     Boolean   @default(false)
   highestScore    Int       @default(0)
   totalGames      Int       @default(0)

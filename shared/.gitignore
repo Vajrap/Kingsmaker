@@ -1,0 +1,6 @@
+# Generated files
+dist/
+node_modules/
+
+# Prisma generated client (but keep it for builds)
+# prisma/generated/ - Don't ignore this, we need it for type generation 

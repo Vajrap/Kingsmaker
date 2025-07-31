@@ -17,4 +17,11 @@ export interface ValidateRoomStatusRequest {
 export interface ValidateRoomStatusResponse {
     valid: boolean;
 }
+export type CreateRoomInput = {
+    sessionId: string;
+    data: GameRoom;
+};
+export type CreateRoomOutput = {
+    roomId: string;
+};
 //# sourceMappingURL=room.d.ts.map

@@ -1,0 +1,8 @@
+# Generated Prisma client files
+prisma/generated/
+
+# TypeScript compiled output
+dist/
+
+# Node modules
+node_modules/ 

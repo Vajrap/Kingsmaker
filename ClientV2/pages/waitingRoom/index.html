@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Waiting Room - KingsMaker</title>
+    <link rel="stylesheet" href="/pagesAndComponent/style.css">
+    <link rel="stylesheet" href="/pagesAndComponent/waitingRoom/style.css">
+  </head>
+  <body>
+    <div id="app">
+      <div class="page-container">
+        <div class="page-header">
+          <h1 class="page-title">Waiting Room</h1>
+          <div class="page-subtitle">
+            <span id="roomName">Room Name</span>
+            <span id="connectionStatus" class="ml-4 text-secondary">Connecting...</span>
+          </div>
+        </div>
+
+        <div class="waiting-room-content">
+          <div class="players-section">
+            <h2>Players <span id="playerCount">(0/4)</span></h2>
+            <div id="playersList" class="players-list">
+              <div class="loading-placeholder">
+                <p>Loading players...</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="room-settings-section">
+            <h2>Room Settings</h2>
+            <div class="settings-list">
+              <div class="setting-item">
+                <span class="setting-label">Max Players:</span>
+                <span id="maxPlayers" class="setting-value">4</span>
+              </div>
+              <div class="setting-item">
+                <span class="setting-label">Turn Time Limit:</span>
+                <span id="turnTimeLimit" class="setting-value">5 minutes</span>
+              </div>
+              <div class="setting-item">
+                <span class="setting-label">Spectators:</span>
+                <span id="allowSpectators" class="setting-value">Allowed</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="chat-section">
+            <h2>Room Chat</h2>
+            <div id="chatMessages" class="chat-messages">
+              <div class="chat-message system">
+                <span class="message-text">Welcome to the room! Use chat to coordinate with other players.</span>
+              </div>
+            </div>
+            <div class="chat-input-container">
+              <input 
+                type="text" 
+                id="chatInput" 
+                class="chat-input" 
+                placeholder="Type a message..."
+                maxlength="200"
+              />
+              <button id="sendChatBtn" class="btn btn-primary btn-sm">
+                Send
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="waiting-room-actions">
+          <button id="leaveRoomBtn" class="btn btn-secondary">
+            Leave Room
+          </button>
+          <button id="readyBtn" class="btn btn-primary" disabled>
+            <span id="readyBtnText">Ready</span>
+            <span id="readySpinner" class="spinner hidden">Setting...</span>
+          </button>
+          <button id="startGameBtn" class="btn btn-success hidden" disabled>
+            Start Game
+          </button>
+        </div>
+
+        <!-- Alert Container -->
+        <div id="alertContainer" class="hidden"></div>
+      </div>
+    </div>
+    <script type="module" src="./viewModel.ts"></script>
+  </body>
+</html> 

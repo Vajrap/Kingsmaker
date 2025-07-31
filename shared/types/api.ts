@@ -1,4 +1,4 @@
-type SuccessResponse<T> = {
+export type SuccessResponse<T> = {
     success: true;
     data: T;
     message?: string;
@@ -6,12 +6,14 @@ type SuccessResponse<T> = {
 
 type ErrorResponse = {
     success: false;
+    type: string;
     message: string;
 };
 
-export function errorRes(message: string): ErrorResponse {
+export function errorRes(type: string, message: string): ErrorResponse {
     return {
         success: false,
+        type,
         message,
     };
 }
@@ -24,4 +26,4 @@ export function ok<T>(data: T, message?: string): SuccessResponse<T> {
         data,
         message,
     };
-} 
+}

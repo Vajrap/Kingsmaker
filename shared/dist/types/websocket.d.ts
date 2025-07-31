@@ -1,5 +1,13 @@
-import type { GameRoom } from "./room";
+import { Player } from "./player";
+import { type GameRoom } from "./room";
 export type LobbyClientMessage = {
+    type: "JOIN";
+    data: {
+        userId: number;
+        sessionId: string;
+        type: "GUEST" | "REGISTERED";
+    };
+} | {
     type: "GET_ROOM_LIST";
     data: {
         sessionId: string;
@@ -8,16 +16,25 @@ export type LobbyClientMessage = {
     type: "CREATE_ROOM";
     data: {
         sessionId: string;
-        data: GameRoom;
+        roomData: GameRoom;
+        player: Player;
     };
 } | {
     type: "JOIN_ROOM";
     data: {
-        sessionId: string;
+        player: Player;
         roomId: string;
     };
 };
 export type LobbyServerMessage = {
+    type: "CONNECTED";
+    data: {
+        message: string;
+    };
+} | {
+    type: "ERROR";
+    error: "ALREADY_LOGGED_IN" | "SEASON_INVALID" | "INVALID_TYPE";
+} | {
     type: "ROOM_LIST";
     data: {
         rooms: GameRoom[];

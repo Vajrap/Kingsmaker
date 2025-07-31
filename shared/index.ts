@@ -3,7 +3,8 @@ export * from "./types/types";
 export * from "./prisma/prisma";
 export * from "./redis/redis";
 export * from "./session/sessionManagerClient";
-export * from "./utils/jsonPost";
+export * from "./utils/restHandler";
+export * from "./utils/wsHandler";
 
 // Export Prisma types
 export type { User } from "./prisma/generated";

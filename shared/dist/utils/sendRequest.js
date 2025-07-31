@@ -16,6 +16,7 @@ export async function sendRestRequest(url, method = "POST", body, timeout = 5000
                 .catch(() => ({ message: "Unknown error" }));
             return {
                 success: false,
+                type: error.name,
                 message: error.message,
             };
         }
@@ -25,6 +26,9 @@ export async function sendRestRequest(url, method = "POST", body, timeout = 5000
         clearTimeout(timer);
         return {
             success: false,
+            type: err instanceof DOMException && err.name === "AbortError"
+                ? err.name
+                : "Unknown Error",
             message: err instanceof DOMException && err.name === "AbortError"
                 ? "Request timed out"
                 : err.message,

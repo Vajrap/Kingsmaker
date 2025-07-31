@@ -2,24 +2,23 @@ import { defineConfig } from 'vite'
 import * as path from 'path'
 
 export default defineConfig({
-  root: '.',
-  build: {
-    outDir: 'dist',
-    rollupOptions: {
-      input: {
-        main: path.resolve(__dirname, 'index.html')
-      }
-    }
-  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, '.'),
       '@/utility': path.resolve(__dirname, './utility'),
-      '@/pages': path.resolve(__dirname, './pagesAndComponent')
-    }
+    },
+  },
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        login: path.resolve(__dirname, 'pagesAndComponent/login/index.html'),
+        lobby: path.resolve(__dirname, 'pagesAndComponent/lobby/index.html'),
+        'waiting-room': path.resolve(__dirname, 'pagesAndComponent/waitingRoom/index.html'),
+      },
+    },
   },
   server: {
-    port: 3000,
-    host: true
-  }
+    port: 3001,
+  },
 }) 

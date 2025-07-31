@@ -18,6 +18,7 @@
   "workspaces": [
     "Client",
     "shared",
-    "Server"
+    "Server",
+    "ServerV2"
   ]
 } 

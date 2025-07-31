@@ -11,6 +11,7 @@ class StorageManager {
     private readonly SESSION_KEY = 'kingsmaker_session'
     private readonly USER_KEY = 'kingsmaker_user'
     private readonly THEME_KEY = 'kingsmaker_theme'
+    private readonly ROOM_KEY = 'kingsmaker_current_room'
 
     // Session management
     setSessionId(sessionId: string): void {
@@ -24,6 +25,7 @@ class StorageManager {
     clearSession(): void {
         localStorage.removeItem(this.SESSION_KEY)
         localStorage.removeItem(this.USER_KEY)
+        localStorage.removeItem(this.ROOM_KEY)
     }
 
     // User data management
@@ -36,9 +38,40 @@ class StorageManager {
         return data ? JSON.parse(data) : null
     }
 
+    getUserInfo(): { username: string; userType: string } | null {
+        const userData = this.getUserData()
+        if (!userData) return null
+        
+        return {
+            username: userData.nameAlias || userData.username,
+            userType: userData.userType
+        }
+    }
+
     getUserStatus(): string {
         const userData = this.getUserData()
         return userData?.presenceStatus || 'INITIAL'
+    }
+
+    setUserStatus(status: UserData['presenceStatus']): void {
+        const userData = this.getUserData()
+        if (userData) {
+            userData.presenceStatus = status
+            this.setUserData(userData)
+        }
+    }
+
+    // Room management
+    setCurrentRoomId(roomId: string): void {
+        localStorage.setItem(this.ROOM_KEY, roomId)
+    }
+
+    getCurrentRoomId(): string | null {
+        return localStorage.getItem(this.ROOM_KEY)
+    }
+
+    clearCurrentRoomId(): void {
+        localStorage.removeItem(this.ROOM_KEY)
     }
 
     // Theme management

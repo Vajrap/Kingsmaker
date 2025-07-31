@@ -17,9 +17,10 @@
     "isolatedModules": true,
     "declaration": true,
     "outDir": "dist",
-    "strict": false,
+    "strict": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
+
   },
   "include": [
     "**/*.ts",

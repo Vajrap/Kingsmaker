@@ -1,30 +1,29 @@
-export interface Player {
-    userId: string;
+import { User } from "../prisma/generated";
+export declare class Player {
+    userId: number;
     username: string;
-    userType: "registered" | "guest";
+    userType: "admin" | "registered" | "guest";
+    nameAlias: string;
     isReady: boolean;
     profile: {
-        portraitId?: string;
-        skinId?: string;
+        portrait: string;
+        skin: string;
     };
     lastSeen: string;
     connectionStatus: "connected" | "disconnected" | "grace_period";
-    disconnectedAt?: string;
-    character?: PlayerCharacterSetup;
-}
-export interface PlayerLocation {
-    location: "lobby" | "waiting-room" | "game";
-    roomId?: string;
-    gameId?: string;
-    lastSeen: string;
-}
-export interface PlayerCharacterSetup {
-    portraitId: string;
-    name: string;
+    disconnectedAt: string | null;
     stats: {
         might: number;
         intelligence: number;
         dexterity: number;
     };
+    location: PlayerLocation;
+    sessionId: string | null;
+    constructor(user: User);
+}
+export interface PlayerLocation {
+    location: "lobby" | "waiting-room" | "game";
+    roomId: string | null;
+    gameId: string | null;
 }
 //# sourceMappingURL=player.d.ts.map

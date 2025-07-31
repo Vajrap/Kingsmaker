@@ -1,103 +1,88 @@
-import { Router } from '@/utility/router.ts'
-import { AuthService } from '@/utility/authService.ts'
-import { storageManager } from '@/utility/storageManager.ts'
+import { AuthService } from "@/utility/authService.ts";
+import { storageManager } from "@/utility/storageManager.ts";
+
+/*
+When opening the web
+
+Before Business Logic
+1. add tab-session-id
+2. check active tab id from local storage
+???
+
+SessionId Dominant
+1. check local storage for sessionId
+  if null -> go to loginPage
+2. call server, asking for userData from the sessionId (multiple response)
+  - if error -> return error
+  - if session expired -> go to loginPage
+  - if session is not expired -> extend session and return userData then next go step,
+
+// Session existed + not expired, => autoLogin
+3. client received UserData (partial, only data client really needed), check for UserData.userPresence (or something like so, that gives up idea on where the user was before leaveing)
+  - if presence === 'WaitingRoom'
+    - check with Server, if waitingRoom still exist.
+      - true -> go to waiting room page
+      - false -> go to lobby page
+  - if presence === 'GameRoom'
+    - check with Server, if GameRoom still exist.
+      - true -> go to waiting room page
+      - false -> go to lobby page
+  - other presence status -> go to lobby room
+*/
 
 class App {
-    private router: Router
-    private authService: AuthService
+    private authService: AuthService;
 
     constructor() {
-        this.router = new Router()
-        this.authService = new AuthService()
-        this.init()
+        this.authService = new AuthService();
+        this.init();
     }
 
     private async init() {
-        await this.setupRoutes()
-        await this.checkAuthAndRoute()
-        this.hideLoading()
+        console.log("Initializing app...");
+
+        const path = window.location.pathname;
+        console.log(`Path: ${path}`);
+        if (path !== "/" && path !== "") {
+            console.log(`Already on ${path}, letting page handle itself`);
+            return;
+        }
+
+        await this.handleInitialRouting();
     }
 
-    private async setupRoutes() {
-        // Register all routes
-        this.router.register('/', () => this.redirectToAppropriateRoute())
-        this.router.register('/login', () => this.loadLoginPage())
-        this.router.register('/register', () => this.loadRegisterPage())
-        this.router.register('/lobby', () => this.loadLobbyPage())
-        this.router.register('/waiting-room', () => this.loadWaitingRoomPage())
-        this.router.register('/game', () => this.loadGamePage())
-    }
+    private async handleInitialRouting() {
+        const sessionId = storageManager.getSessionId();
 
-    private async checkAuthAndRoute() {
-        const sessionId = storageManager.getSessionId()
-        
         if (sessionId) {
-            // Try to validate existing session
-            const isValid = await this.authService.validateSession(sessionId)
+            console.log("Found existing session, validating...");
+            const isValid = await this.validateSession(sessionId);
+
             if (isValid) {
-                // Route based on user's presence status
-                const userStatus = storageManager.getUserStatus()
-                this.routeBasedOnStatus(userStatus)
-                return
+                console.log("Session valid, redirecting to lobby");
+                window.location.href = "/pagesAndComponent/lobby/index.html";
+            } else {
+                console.log(
+                    "Session invalid, clearing and redirecting to login",
+                );
+                storageManager.clearSession();
+                window.location.href = "/pagesAndComponent/login/index.html";
             }
-        }
-        
-        // No valid session, go to login
-        this.router.navigate('/login')
-    }
-
-    private routeBasedOnStatus(status: string) {
-        switch (status) {
-            case 'IN_LOBBY':
-                this.router.navigate('/lobby')
-                break
-            case 'IN_WAITING_ROOM':
-                this.router.navigate('/waiting-room')
-                break
-            case 'IN_GAME':
-                this.router.navigate('/game')
-                break
-            default:
-                this.router.navigate('/lobby')
+        } else {
+            console.log("No session found, redirecting to login");
+            window.location.href = "/pagesAndComponent/login/index.html";
         }
     }
 
-    private async redirectToAppropriateRoute() {
-        await this.checkAuthAndRoute()
-    }
-
-    private async loadLoginPage() {
-        const { LoginPage } = await import('../pagesAndComponent/login/viewModel')
-        new LoginPage()
-    }
-
-    private async loadRegisterPage() {
-        const { RegisterPage } = await import('../pagesAndComponent/register/viewModel')
-        new RegisterPage()
-    }
-
-    private async loadLobbyPage() {
-        const { LobbyPage } = await import('../pagesAndComponent/lobby/viewModel')
-        new LobbyPage()
-    }
-
-    private async loadWaitingRoomPage() {
-        const { WaitingRoomPage } = await import('../pagesAndComponent/waitingRoom/viewModel')
-        new WaitingRoomPage()
-    }
-
-    private async loadGamePage() {
-        const { GamePage } = await import('../pagesAndComponent/game/viewModel')
-        new GamePage()
-    }
-
-    private hideLoading() {
-        const loading = document.getElementById('loading')
-        const mainContent = document.getElementById('main-content')
-        if (loading) loading.classList.add('hidden')
-        if (mainContent) mainContent.classList.remove('hidden')
+    private async validateSession(sessionId: string): Promise<boolean> {
+        try {
+            return await this.authService.validateSession(sessionId);
+        } catch (error) {
+            console.error("Session validation failed:", error);
+            return false;
+        }
     }
 }
 
 // Initialize the application
-new App() 
+new App();

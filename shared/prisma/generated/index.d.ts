@@ -244,8 +244,8 @@ export namespace Prisma {
   export import Exact = $Public.Exact
 
   /**
-   * Prisma Client JS version: 6.10.0
-   * Query Engine version: aee10d5a411e4360c6d3445ce4810ca65adbf3e8
+   * Prisma Client JS version: 6.12.0
+   * Query Engine version: 8047c96bbd92db98a2abc7c9323ce77c02c89dbc
    */
   export type PrismaVersion = {
     client: string
@@ -992,6 +992,9 @@ export namespace Prisma {
 
   export type UserAvgAggregateOutputType = {
     id: number | null
+    might: number | null
+    intelligence: number | null
+    dexterity: number | null
     highestScore: number | null
     totalGames: number | null
     totalWins: number | null
@@ -1001,6 +1004,9 @@ export namespace Prisma {
 
   export type UserSumAggregateOutputType = {
     id: number | null
+    might: number | null
+    intelligence: number | null
+    dexterity: number | null
     highestScore: number | null
     totalGames: number | null
     totalWins: number | null
@@ -1015,6 +1021,11 @@ export namespace Prisma {
     email: string | null
     password: string | null
     nameAlias: string | null
+    portrait: string | null
+    skin: string | null
+    might: number | null
+    intelligence: number | null
+    dexterity: number | null
     isConfirmed: boolean | null
     highestScore: number | null
     totalGames: number | null
@@ -1032,6 +1043,11 @@ export namespace Prisma {
     email: string | null
     password: string | null
     nameAlias: string | null
+    portrait: string | null
+    skin: string | null
+    might: number | null
+    intelligence: number | null
+    dexterity: number | null
     isConfirmed: boolean | null
     highestScore: number | null
     totalGames: number | null
@@ -1049,6 +1065,11 @@ export namespace Prisma {
     email: number
     password: number
     nameAlias: number
+    portrait: number
+    skin: number
+    might: number
+    intelligence: number
+    dexterity: number
     isConfirmed: number
     highestScore: number
     totalGames: number
@@ -1068,6 +1089,9 @@ export namespace Prisma {
 
   export type UserAvgAggregateInputType = {
     id?: true
+    might?: true
+    intelligence?: true
+    dexterity?: true
     highestScore?: true
     totalGames?: true
     totalWins?: true
@@ -1077,6 +1101,9 @@ export namespace Prisma {
 
   export type UserSumAggregateInputType = {
     id?: true
+    might?: true
+    intelligence?: true
+    dexterity?: true
     highestScore?: true
     totalGames?: true
     totalWins?: true
@@ -1091,6 +1118,11 @@ export namespace Prisma {
     email?: true
     password?: true
     nameAlias?: true
+    portrait?: true
+    skin?: true
+    might?: true
+    intelligence?: true
+    dexterity?: true
     isConfirmed?: true
     highestScore?: true
     totalGames?: true
@@ -1108,6 +1140,11 @@ export namespace Prisma {
     email?: true
     password?: true
     nameAlias?: true
+    portrait?: true
+    skin?: true
+    might?: true
+    intelligence?: true
+    dexterity?: true
     isConfirmed?: true
     highestScore?: true
     totalGames?: true
@@ -1125,6 +1162,11 @@ export namespace Prisma {
     email?: true
     password?: true
     nameAlias?: true
+    portrait?: true
+    skin?: true
+    might?: true
+    intelligence?: true
+    dexterity?: true
     isConfirmed?: true
     highestScore?: true
     totalGames?: true
@@ -1234,6 +1276,11 @@ export namespace Prisma {
     email: string
     password: string
     nameAlias: string
+    portrait: string
+    skin: string
+    might: number
+    intelligence: number
+    dexterity: number
     isConfirmed: boolean
     highestScore: number
     totalGames: number
@@ -1275,6 +1322,11 @@ export namespace Prisma {
     email?: boolean
     password?: boolean
     nameAlias?: boolean
+    portrait?: boolean
+    skin?: boolean
+    might?: boolean
+    intelligence?: boolean
+    dexterity?: boolean
     isConfirmed?: boolean
     highestScore?: boolean
     totalGames?: boolean
@@ -1297,6 +1349,11 @@ export namespace Prisma {
     email?: boolean
     password?: boolean
     nameAlias?: boolean
+    portrait?: boolean
+    skin?: boolean
+    might?: boolean
+    intelligence?: boolean
+    dexterity?: boolean
     isConfirmed?: boolean
     highestScore?: boolean
     totalGames?: boolean
@@ -1319,6 +1376,11 @@ export namespace Prisma {
     email?: boolean
     password?: boolean
     nameAlias?: boolean
+    portrait?: boolean
+    skin?: boolean
+    might?: boolean
+    intelligence?: boolean
+    dexterity?: boolean
     isConfirmed?: boolean
     highestScore?: boolean
     totalGames?: boolean
@@ -1341,6 +1403,11 @@ export namespace Prisma {
     email?: boolean
     password?: boolean
     nameAlias?: boolean
+    portrait?: boolean
+    skin?: boolean
+    might?: boolean
+    intelligence?: boolean
+    dexterity?: boolean
     isConfirmed?: boolean
     highestScore?: boolean
     totalGames?: boolean
@@ -1356,7 +1423,7 @@ export namespace Prisma {
     sessionExpireAt?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "username" | "type" | "email" | "password" | "nameAlias" | "isConfirmed" | "highestScore" | "totalGames" | "totalWins" | "totalLosses" | "totalTies" | "achievements" | "unlockables" | "customization" | "friends" | "blocked" | "sessionId" | "sessionExpireAt", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "username" | "type" | "email" | "password" | "nameAlias" | "portrait" | "skin" | "might" | "intelligence" | "dexterity" | "isConfirmed" | "highestScore" | "totalGames" | "totalWins" | "totalLosses" | "totalTies" | "achievements" | "unlockables" | "customization" | "friends" | "blocked" | "sessionId" | "sessionExpireAt", ExtArgs["result"]["user"]>
 
   export type $UserPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "User"
@@ -1368,6 +1435,11 @@ export namespace Prisma {
       email: string
       password: string
       nameAlias: string
+      portrait: string
+      skin: string
+      might: number
+      intelligence: number
+      dexterity: number
       isConfirmed: boolean
       highestScore: number
       totalGames: number
@@ -1810,6 +1882,11 @@ export namespace Prisma {
     readonly email: FieldRef<"User", 'String'>
     readonly password: FieldRef<"User", 'String'>
     readonly nameAlias: FieldRef<"User", 'String'>
+    readonly portrait: FieldRef<"User", 'String'>
+    readonly skin: FieldRef<"User", 'String'>
+    readonly might: FieldRef<"User", 'Int'>
+    readonly intelligence: FieldRef<"User", 'Int'>
+    readonly dexterity: FieldRef<"User", 'Int'>
     readonly isConfirmed: FieldRef<"User", 'Boolean'>
     readonly highestScore: FieldRef<"User", 'Int'>
     readonly totalGames: FieldRef<"User", 'Int'>
@@ -3234,6 +3311,11 @@ export namespace Prisma {
     email: 'email',
     password: 'password',
     nameAlias: 'nameAlias',
+    portrait: 'portrait',
+    skin: 'skin',
+    might: 'might',
+    intelligence: 'intelligence',
+    dexterity: 'dexterity',
     isConfirmed: 'isConfirmed',
     highestScore: 'highestScore',
     totalGames: 'totalGames',
@@ -3411,6 +3493,11 @@ export namespace Prisma {
     email?: StringFilter<"User"> | string
     password?: StringFilter<"User"> | string
     nameAlias?: StringFilter<"User"> | string
+    portrait?: StringFilter<"User"> | string
+    skin?: StringFilter<"User"> | string
+    might?: IntFilter<"User"> | number
+    intelligence?: IntFilter<"User"> | number
+    dexterity?: IntFilter<"User"> | number
     isConfirmed?: BoolFilter<"User"> | boolean
     highestScore?: IntFilter<"User"> | number
     totalGames?: IntFilter<"User"> | number
@@ -3433,6 +3520,11 @@ export namespace Prisma {
     email?: SortOrder
     password?: SortOrder
     nameAlias?: SortOrder
+    portrait?: SortOrder
+    skin?: SortOrder
+    might?: SortOrder
+    intelligence?: SortOrder
+    dexterity?: SortOrder
     isConfirmed?: SortOrder
     highestScore?: SortOrder
     totalGames?: SortOrder
@@ -3459,6 +3551,11 @@ export namespace Prisma {
     NOT?: UserWhereInput | UserWhereInput[]
     type?: EnumUserTypeFilter<"User"> | $Enums.UserType
     password?: StringFilter<"User"> | string
+    portrait?: StringFilter<"User"> | string
+    skin?: StringFilter<"User"> | string
+    might?: IntFilter<"User"> | number
+    intelligence?: IntFilter<"User"> | number
+    dexterity?: IntFilter<"User"> | number
     isConfirmed?: BoolFilter<"User"> | boolean
     highestScore?: IntFilter<"User"> | number
     totalGames?: IntFilter<"User"> | number
@@ -3480,6 +3577,11 @@ export namespace Prisma {
     email?: SortOrder
     password?: SortOrder
     nameAlias?: SortOrder
+    portrait?: SortOrder
+    skin?: SortOrder
+    might?: SortOrder
+    intelligence?: SortOrder
+    dexterity?: SortOrder
     isConfirmed?: SortOrder
     highestScore?: SortOrder
     totalGames?: SortOrder
@@ -3510,6 +3612,11 @@ export namespace Prisma {
     email?: StringWithAggregatesFilter<"User"> | string
     password?: StringWithAggregatesFilter<"User"> | string
     nameAlias?: StringWithAggregatesFilter<"User"> | string
+    portrait?: StringWithAggregatesFilter<"User"> | string
+    skin?: StringWithAggregatesFilter<"User"> | string
+    might?: IntWithAggregatesFilter<"User"> | number
+    intelligence?: IntWithAggregatesFilter<"User"> | number
+    dexterity?: IntWithAggregatesFilter<"User"> | number
     isConfirmed?: BoolWithAggregatesFilter<"User"> | boolean
     highestScore?: IntWithAggregatesFilter<"User"> | number
     totalGames?: IntWithAggregatesFilter<"User"> | number
@@ -3580,6 +3687,11 @@ export namespace Prisma {
     email: string
     password: string
     nameAlias: string
+    portrait: string
+    skin: string
+    might: number
+    intelligence: number
+    dexterity: number
     isConfirmed?: boolean
     highestScore?: number
     totalGames?: number
@@ -3602,6 +3714,11 @@ export namespace Prisma {
     email: string
     password: string
     nameAlias: string
+    portrait: string
+    skin: string
+    might: number
+    intelligence: number
+    dexterity: number
     isConfirmed?: boolean
     highestScore?: number
     totalGames?: number
@@ -3623,6 +3740,11 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     nameAlias?: StringFieldUpdateOperationsInput | string
+    portrait?: StringFieldUpdateOperationsInput | string
+    skin?: StringFieldUpdateOperationsInput | string
+    might?: IntFieldUpdateOperationsInput | number
+    intelligence?: IntFieldUpdateOperationsInput | number
+    dexterity?: IntFieldUpdateOperationsInput | number
     isConfirmed?: BoolFieldUpdateOperationsInput | boolean
     highestScore?: IntFieldUpdateOperationsInput | number
     totalGames?: IntFieldUpdateOperationsInput | number
@@ -3645,6 +3767,11 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     nameAlias?: StringFieldUpdateOperationsInput | string
+    portrait?: StringFieldUpdateOperationsInput | string
+    skin?: StringFieldUpdateOperationsInput | string
+    might?: IntFieldUpdateOperationsInput | number
+    intelligence?: IntFieldUpdateOperationsInput | number
+    dexterity?: IntFieldUpdateOperationsInput | number
     isConfirmed?: BoolFieldUpdateOperationsInput | boolean
     highestScore?: IntFieldUpdateOperationsInput | number
     totalGames?: IntFieldUpdateOperationsInput | number
@@ -3667,6 +3794,11 @@ export namespace Prisma {
     email: string
     password: string
     nameAlias: string
+    portrait: string
+    skin: string
+    might: number
+    intelligence: number
+    dexterity: number
     isConfirmed?: boolean
     highestScore?: number
     totalGames?: number
@@ -3688,6 +3820,11 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     nameAlias?: StringFieldUpdateOperationsInput | string
+    portrait?: StringFieldUpdateOperationsInput | string
+    skin?: StringFieldUpdateOperationsInput | string
+    might?: IntFieldUpdateOperationsInput | number
+    intelligence?: IntFieldUpdateOperationsInput | number
+    dexterity?: IntFieldUpdateOperationsInput | number
     isConfirmed?: BoolFieldUpdateOperationsInput | boolean
     highestScore?: IntFieldUpdateOperationsInput | number
     totalGames?: IntFieldUpdateOperationsInput | number
@@ -3710,6 +3847,11 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     nameAlias?: StringFieldUpdateOperationsInput | string
+    portrait?: StringFieldUpdateOperationsInput | string
+    skin?: StringFieldUpdateOperationsInput | string
+    might?: IntFieldUpdateOperationsInput | number
+    intelligence?: IntFieldUpdateOperationsInput | number
+    dexterity?: IntFieldUpdateOperationsInput | number
     isConfirmed?: BoolFieldUpdateOperationsInput | boolean
     highestScore?: IntFieldUpdateOperationsInput | number
     totalGames?: IntFieldUpdateOperationsInput | number
@@ -3870,6 +4012,11 @@ export namespace Prisma {
     email?: SortOrder
     password?: SortOrder
     nameAlias?: SortOrder
+    portrait?: SortOrder
+    skin?: SortOrder
+    might?: SortOrder
+    intelligence?: SortOrder
+    dexterity?: SortOrder
     isConfirmed?: SortOrder
     highestScore?: SortOrder
     totalGames?: SortOrder
@@ -3887,6 +4034,9 @@ export namespace Prisma {
 
   export type UserAvgOrderByAggregateInput = {
     id?: SortOrder
+    might?: SortOrder
+    intelligence?: SortOrder
+    dexterity?: SortOrder
     highestScore?: SortOrder
     totalGames?: SortOrder
     totalWins?: SortOrder
@@ -3901,6 +4051,11 @@ export namespace Prisma {
     email?: SortOrder
     password?: SortOrder
     nameAlias?: SortOrder
+    portrait?: SortOrder
+    skin?: SortOrder
+    might?: SortOrder
+    intelligence?: SortOrder
+    dexterity?: SortOrder
     isConfirmed?: SortOrder
     highestScore?: SortOrder
     totalGames?: SortOrder
@@ -3918,6 +4073,11 @@ export namespace Prisma {
     email?: SortOrder
     password?: SortOrder
     nameAlias?: SortOrder
+    portrait?: SortOrder
+    skin?: SortOrder
+    might?: SortOrder
+    intelligence?: SortOrder
+    dexterity?: SortOrder
     isConfirmed?: SortOrder
     highestScore?: SortOrder
     totalGames?: SortOrder
@@ -3930,6 +4090,9 @@ export namespace Prisma {
 
   export type UserSumOrderByAggregateInput = {
     id?: SortOrder
+    might?: SortOrder
+    intelligence?: SortOrder
+    dexterity?: SortOrder
     highestScore?: SortOrder
     totalGames?: SortOrder
     totalWins?: SortOrder
@@ -4113,16 +4276,16 @@ export namespace Prisma {
     set?: $Enums.UserType
   }
 
-  export type BoolFieldUpdateOperationsInput = {
-    set?: boolean
-  }
-
   export type IntFieldUpdateOperationsInput = {
     set?: number
     increment?: number
     decrement?: number
     multiply?: number
     divide?: number
+  }
+
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
   }
 
   export type NullableStringFieldUpdateOperationsInput = {

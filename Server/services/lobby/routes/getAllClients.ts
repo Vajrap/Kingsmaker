@@ -1,20 +1,20 @@
-import { connections } from "entity/Connections";
+import { Connection, connections } from "entity/Connections";
 
 export async function handleGetAllClients() {
     try {
-        const allConnections = connections.getAllConnections();
+        const allConnections: Connection[] = connections.getAllConnections();
 
+        allConnections[0].session.waitingRoomId;
         const clients = allConnections.map((connection) => ({
-            userId: connection.userId,
-            username: connection.username,
-            userType: connection.userType,
-            status: connection.status,
-            connectedAt: connection.connectedAt,
-            lastActivity: connection.lastActivity,
-            sessionId: connection.sessionId,
-            roomId: connection.roomId || null,
-            ipAddress: connection.ipAddress,
-            userAgent: connection.userAgent,
+            sessionId: connection.session.sessionId,
+            userId: connection.session.userId,
+            userType: connection.session.userType,
+            username: connection.session.username,
+            connectedAt: connection.session.connectedAt,
+            lastSeen: connection.session.lastSeen,
+            presenceStatus: connection.session.presenceStatus,
+            waitingRoomId: connection.session.waitingRoomId,
+            gameRoomId: connection.session.gameRoomId,
         }));
 
         return {
@@ -22,12 +22,10 @@ export async function handleGetAllClients() {
             data: {
                 clients,
                 total: clients.length,
-                connected: clients.filter((c) => c.status === "connected")
+                connected: clients.filter((c) => c.presenceStatus === "INITIAL")
                     .length,
-                disconnected: clients.filter((c) => c.status === "disconnected")
-                    .length,
-                inGracePeriod: clients.filter(
-                    (c) => c.status === "grace_period",
+                disconnected: clients.filter(
+                    (c) => c.presenceStatus === "OFFLINE",
                 ).length,
             },
         };
