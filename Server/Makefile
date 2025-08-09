@@ -43,27 +43,27 @@ install:
 refresh:
 	make generate && make install SERVICE=$(SERVICE)
 
-# Legacy shared library commands (optional for development)
-copy-shared:
-	@echo "📦 [LEGACY] Copying shared library to all services..."
-	@echo "⚠️  Note: This is no longer needed for Docker builds (handled internally)"
-	@echo "Building shared library first..."
-	cd ../shared && bun install && bunx prisma generate --schema=./prisma/schema.prisma && bun run build
-	@echo "Copying to auth service..."
-	mkdir -p services/auth/shared && cp -r ../shared/* services/auth/shared/
-	@echo "Copying to chat service..."
-	mkdir -p services/chat/shared && cp -r ../shared/* services/chat/shared/
-	@echo "Copying to game service..."
-	mkdir -p services/game/shared && cp -r ../shared/* services/game/shared/
-	@echo "Copying to lobby service..."
-	mkdir -p services/lobby/shared && cp -r ../shared/* services/lobby/shared/
-	@echo "Copying to sessionManager service..."
-	mkdir -p services/sessionManager/shared && cp -r ../shared/* services/sessionManager/shared/
-	@echo "Copying to store service..."
-	mkdir -p services/store/shared && cp -r ../shared/* services/store/shared/
-	@echo "Copying to waitingRoom service..."
-	mkdir -p services/waitingRoom/shared && cp -r ../shared/* services/waitingRoom/shared/
-	@echo "✅ Shared library copied to all services!"
+# # Legacy shared library commands (optional for development)
+# copy-shared:
+# 	@echo "📦 [LEGACY] Copying shared library to all services..."
+# 	@echo "⚠️  Note: This is no longer needed for Docker builds (handled internally)"
+# 	@echo "Building shared library first..."
+# 	cd ../shared && bun install && bunx prisma generate --schema=./prisma/schema.prisma && bun run build
+# 	@echo "Copying to auth service..."
+# 	mkdir -p services/auth/shared && cp -r ../shared/* services/auth/shared/
+# 	@echo "Copying to chat service..."
+# 	mkdir -p services/chat/shared && cp -r ../shared/* services/chat/shared/
+# 	@echo "Copying to game service..."
+# 	mkdir -p services/game/shared && cp -r ../shared/* services/game/shared/
+# 	@echo "Copying to lobby service..."
+# 	mkdir -p services/lobby/shared && cp -r ../shared/* services/lobby/shared/
+# 	@echo "Copying to sessionManager service..."
+# 	mkdir -p services/sessionManager/shared && cp -r ../shared/* services/sessionManager/shared/
+# 	@echo "Copying to store service..."
+# 	mkdir -p services/store/shared && cp -r ../shared/* services/store/shared/
+# 	@echo "Copying to waitingRoom service..."
+# 	mkdir -p services/waitingRoom/shared && cp -r ../shared/* services/waitingRoom/shared/
+# 	@echo "✅ Shared library copied to all services!"
 
 clean-shared:
 	@echo "🧹 Cleaning copied shared libraries from all services..."
@@ -93,60 +93,60 @@ clean:
 dev: build up logs
 
 # Build and run individual services
-auth:
-	docker-compose up --build -d auth db
-	docker-compose logs -f auth
+# auth:
+# 	docker-compose up --build -d auth db
+# 	docker-compose logs -f auth
 
-chat:
-	docker-compose up --build -d chat db
-	docker-compose logs -f chat
+# chat:
+# 	docker-compose up --build -d chat db
+# 	docker-compose logs -f chat
 
-game:
-	docker-compose up --build -d game db
-	docker-compose logs -f game
+# game:
+# 	docker-compose up --build -d game db
+# 	docker-compose logs -f game
 
-lobby:
-	docker-compose up --build -d lobby db
-	docker-compose logs -f lobby
+# lobby:
+# 	docker-compose up --build -d lobby db
+# 	docker-compose logs -f lobby
 
-waitingroom:
-	docker-compose up --build -d waitingroom db
-	docker-compose logs -f waitingroom
+# waitingroom:
+# 	docker-compose up --build -d waitingroom db
+# 	docker-compose logs -f waitingroom
 
-store:
-	docker-compose up --build -d store db
-	docker-compose logs -f store
+# store:
+# 	docker-compose up --build -d store db
+# 	docker-compose logs -f store
 
-# Test individual service builds
-test-auth:
-	docker build -f services/auth/Dockerfile -t test-auth .
+# # Test individual service builds
+# test-auth:
+# 	docker build -f services/auth/Dockerfile -t test-auth .
 
-test-chat:
-	docker build -f services/chat/Dockerfile -t test-chat .
+# test-chat:
+# 	docker build -f services/chat/Dockerfile -t test-chat .
 
-# Help command
-help:
-	@echo "Available commands:"
-	@echo "  generate      - Generate Prisma client from shared schema"
-	@echo "  migrate       - Run database migrations from shared schema"
-	@echo "  migrate-init  - Create initial migration from shared schema"
-	@echo "  migrate-deploy- Deploy database migrations (production)"
-	@echo "  migrate-reset - Reset database and run migrations"
-	@echo "  db-push       - Push schema to database (no migrations)"
-	@echo "  db-reset-hard - Drop all tables and recreate from schema"
-	@echo "  copy-shared   - [LEGACY] Copy shared library to all services (optional for development)"
-	@echo "  clean-shared  - Remove copied shared libraries from all services"
-	@echo "  build         - Build shared library and all Docker services"
-	@echo "  up            - Start all services in background"
-	@echo "  down          - Stop all services"
-	@echo "  logs          - Show logs for all services"
-	@echo "  clean         - Remove all containers, volumes, and images"
-	@echo "  dev           - Copy shared, start services and show logs"
-	@echo "  auth          - Build and run auth service with logs"
-	@echo "  chat          - Build and run chat service with logs"
-	@echo "  game          - Build and run game service with logs"
-	@echo "  lobby         - Build and run lobby service with logs"
-	@echo "  waitingroom   - Build and run waitingroom service with logs"
-	@echo "  store         - Build and run store service with logs"
-	@echo "  test-auth     - Test build auth service"
-	@echo "  help          - Show this help message"
+# # Help command
+# help:
+# 	@echo "Available commands:"
+# 	@echo "  generate      - Generate Prisma client from shared schema"
+# 	@echo "  migrate       - Run database migrations from shared schema"
+# 	@echo "  migrate-init  - Create initial migration from shared schema"
+# 	@echo "  migrate-deploy- Deploy database migrations (production)"
+# 	@echo "  migrate-reset - Reset database and run migrations"
+# 	@echo "  db-push       - Push schema to database (no migrations)"
+# 	@echo "  db-reset-hard - Drop all tables and recreate from schema"
+# 	@echo "  copy-shared   - [LEGACY] Copy shared library to all services (optional for development)"
+# 	@echo "  clean-shared  - Remove copied shared libraries from all services"
+# 	@echo "  build         - Build shared library and all Docker services"
+# 	@echo "  up            - Start all services in background"
+# 	@echo "  down          - Stop all services"
+# 	@echo "  logs          - Show logs for all services"
+# 	@echo "  clean         - Remove all containers, volumes, and images"
+# 	@echo "  dev           - Copy shared, start services and show logs"
+# 	@echo "  auth          - Build and run auth service with logs"
+# 	@echo "  chat          - Build and run chat service with logs"
+# 	@echo "  game          - Build and run game service with logs"
+# 	@echo "  lobby         - Build and run lobby service with logs"
+# 	@echo "  waitingroom   - Build and run waitingroom service with logs"
+# 	@echo "  store         - Build and run store service with logs"
+# 	@echo "  test-auth     - Test build auth service"
+# 	@echo "  help          - Show this help message"
